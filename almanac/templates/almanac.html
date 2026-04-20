@@ -65,6 +65,11 @@
     flex-direction: column;
     justify-content: center;
     position: relative;
+    background-color: var(--slide-bg, var(--cream));
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.11  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>");
+    background-size: 220px 220px;
+    background-blend-mode: overlay;
+    color: var(--slide-fg, var(--ink));
     border-bottom: 1px solid rgba(28,22,18,0.05);
     overflow: hidden;
   }
@@ -74,7 +79,7 @@
     text-transform: uppercase;
     letter-spacing: 0.18em;
     font-size: 12px;
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     margin-bottom: 1.6em;
   }
 
@@ -91,7 +96,7 @@
     align-items: baseline;
     flex-wrap: wrap;
   }
-  .cover-meta .label { font-size: 14px; color: var(--plum); text-transform: uppercase; letter-spacing: 0.12em; }
+  .cover-meta .label { font-size: 14px; color: var(--slide-accent, var(--plum)); text-transform: uppercase; letter-spacing: 0.12em; }
   .cover-meta .value { font-size: 18px; }
   .cover-tag { font-size: clamp(20px, 2.2vw, 28px); margin-top: 1.6rem; color: var(--rust); }
 
@@ -107,7 +112,7 @@
     font-family: "Geist Mono", ui-monospace, monospace;
     font-weight: 600;
     font-size: clamp(40px, 6vw, 88px);
-    color: var(--ink);
+    color: inherit;
     line-height: 1;
     overflow-wrap: anywhere;
   }
@@ -116,7 +121,7 @@
     text-transform: uppercase;
     letter-spacing: 0.16em;
     font-size: 12px;
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     margin-top: 0.6rem;
   }
 
@@ -173,7 +178,7 @@
   }
   .stack-legend .pct {
     font-family: "Geist Mono", monospace;
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     margin-left: 0.4rem;
   }
 
@@ -190,11 +195,11 @@
     border-bottom: 1px solid rgba(28,22,18,0.08);
     align-items: baseline;
   }
-  .ranked .rank { font-family: "Geist Mono", monospace; color: var(--plum); }
+  .ranked .rank { font-family: "Geist Mono", monospace; color: var(--slide-accent, var(--plum)); }
   .ranked .name { font-family: "Instrument Serif", serif; font-style: italic; font-size: 22px; }
   .ranked .num  { font-family: "Geist Mono", monospace; text-align: right; }
   .ranked .num.added   { color: var(--sage); }
-  .ranked .num.removed { color: var(--plum); }
+  .ranked .num.removed { color: var(--slide-accent, var(--plum)); }
   .ranked .num.commits { color: var(--rust); }
 
   .author-row {
@@ -209,8 +214,8 @@
     width: 48px; height: 48px;
     border-radius: 50%;
     object-fit: cover;
-    background: var(--ink);
-    color: var(--cream);
+    background: var(--slide-fg, var(--ink));
+    color: var(--slide-bg, var(--cream));
     display: flex; align-items: center; justify-content: center;
     font-family: "Geist Mono", monospace;
     font-size: 14px;
@@ -228,11 +233,11 @@
     font-size: clamp(40px, 6vw, 84px);
     line-height: 1.0;
     margin-bottom: 1.6rem;
-    color: var(--ink);
+    color: inherit;
   }
   .narrative .meta {
     font-family: "Geist Mono", monospace;
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     font-size: 14px;
     display: flex; gap: 2rem; flex-wrap: wrap;
   }
@@ -242,7 +247,7 @@
     font-family: "Instrument Serif", serif;
     font-style: italic;
     font-size: clamp(24px, 3vw, 36px);
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     max-width: 60ch;
   }
 
@@ -258,7 +263,7 @@
   .file-bars .path {
     font-family: "Geist Mono", monospace;
     font-size: 13px;
-    color: var(--ink);
+    color: inherit;
     overflow: hidden;
     text-overflow: ellipsis;
     direction: rtl;
@@ -266,7 +271,7 @@
     white-space: nowrap;
   }
   .file-bars .bar-track { background: rgba(28,22,18,0.06); height: 18px; border-radius: 3px; overflow: hidden; }
-  .file-bars .bar { background: var(--plum); height: 100%; width: 0; transition: width 0.6s cubic-bezier(.5,.05,.2,1); }
+  .file-bars .bar { background: var(--slide-accent, var(--plum)); height: 100%; width: 0; transition: width 0.6s cubic-bezier(.5,.05,.2,1); }
   .file-bars .edits { font-family: "Geist Mono", monospace; text-align: right; color: var(--rust); }
   .file-bars .row.has-bar { grid-template-columns: 320px 1fr 80px; }
 
@@ -274,7 +279,7 @@
     margin-top: 2rem;
     font-family: "Inter Tight", sans-serif;
     font-size: 13px;
-    color: var(--plum);
+    color: var(--slide-accent, var(--plum));
     opacity: 0.7;
   }
 
@@ -283,6 +288,13 @@
 
   /* Plot tweaks */
   figure { margin: 0; }
+
+  /* Dark-slide overrides — bar tracks and dividers adapt to light-on-dark */
+  .slide .stack-bar    { background: rgba(244, 237, 224, 0.12); }
+  .slide .bar-track    { background: rgba(244, 237, 224, 0.10); }
+  .slide .ranked       { border-top-color:    rgba(244, 237, 224, 0.12); }
+  .slide .ranked .row  { border-bottom-color: rgba(244, 237, 224, 0.08); }
+  .slide .author-row   { border-bottom-color: rgba(244, 237, 224, 0.08); }
 </style>
 </head>
 <body>
@@ -320,12 +332,26 @@
 
   const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const VERB_COLOR = {
-    feat: C.sage, fix: C.rust, chore: C.ochre, docs: C.plum,
-    refactor: C.rust, test: C.ink, style: C.sage, perf: C.ochre,
-    build: C.plum, ci: C.sage, revert: C.rust,
-    unclear: "rgba(28, 22, 18, 0.38)",
+    feat: C.sage, fix: C.rust, chore: C.ochre, docs: "#7B9EC8",
+    refactor: C.rust, test: C.cream, style: C.sage, perf: C.ochre,
+    build: "#B896C8", ci: C.sage, revert: C.rust,
+    unclear: "rgba(244, 237, 224, 0.30)",
   };
   const LANG_PALETTE = [C.rust, C.sage, C.ochre, C.plum, C.ink];
+  const LANG_PALETTE_DARK = [C.rust, C.sage, C.ochre, "#5B9E6A", C.cream];
+
+  const THEMES = {
+    cover:          { bg: "#1D3327", fg: C.cream, accent: "#7EC8A0" },
+    "first-commit": { bg: "#12162B", fg: C.cream, accent: C.ochre   },
+    numbers:        { bg: "#2B1608", fg: C.cream, accent: C.cream   },
+    heatmap:        { bg: "#0D1F2D", fg: C.cream, accent: "#5B8FA0" },
+    cadence:        { bg: "#221900", fg: C.cream, accent: C.ochre   },
+    "top-files":    { bg: "#1A1A1E", fg: C.cream, accent: C.rust    },
+    languages:      { bg: "#0F1E14", fg: C.cream, accent: "#5B9E6A" },
+    verbs:          { bg: "#2B0A0A", fg: C.cream, accent: "#CF6B5E" },
+    authors:        { bg: "#1C0E26", fg: C.cream, accent: "#9B6FAB" },
+    closer:         { bg: "#1D3327", fg: C.cream, accent: "#7EC8A0" },
+  };
 
   // Slide builder helpers
   const root = document.getElementById("root");
@@ -339,9 +365,14 @@
     if (html) el.innerHTML = html;
     return el;
   };
-  const slide = (id, inner) => {
+  const slide = (id, inner, theme = null) => {
     const s = make("section", { class: "slide", id });
     s.innerHTML = inner;
+    if (theme) {
+      s.style.setProperty("--slide-bg",     theme.bg);
+      s.style.setProperty("--slide-fg",     theme.fg ?? C.cream);
+      s.style.setProperty("--slide-accent", theme.accent);
+    }
     root.appendChild(s);
     return s;
   };
@@ -364,7 +395,7 @@
       <div><div class="label">HEAD</div><div class="value mono">${escapeHtml((BUNDLE.repo?.head_sha || "").slice(0,7))}</div></div>
     </div>
     <div class="cover-tag prose">A year in commits — scroll to begin.</div>
-  `);
+  `, THEMES.cover);
 
   // ── First Commit ───────────────────────────────────────────────────────
   if (BUNDLE.first_commit) {
@@ -380,7 +411,7 @@
           <div><span style="opacity:.6">sha</span> ${escapeHtml((fc.sha || "").slice(0,7))}</div>
         </div>
       </div>
-    `);
+    `, THEMES["first-commit"]);
   }
 
   // ── Year in Numbers ────────────────────────────────────────────────────
@@ -403,7 +434,7 @@
         </div>
       `).join("")}
     </div>
-  `);
+  `, THEMES.numbers);
 
   // ── Calendar Heatmap ───────────────────────────────────────────────────
   if (Array.isArray(BUNDLE.commits_per_day) && BUNDLE.commits_per_day.length > 0) {
@@ -412,7 +443,7 @@
       <h2 class="section display">Day by day.</h2>
       <div class="heatmap-wrap" id="heatmap-target"></div>
       <div class="footnote ui">One cell per day. Cream = no commits. Rust = busiest.</div>
-    `);
+    `, THEMES.heatmap);
   }
 
   // ── Cadence ────────────────────────────────────────────────────────────
@@ -429,7 +460,7 @@
         <div id="hour-chart" class="chart-wrap"></div>
       </div>
     </div>
-  `);
+  `, THEMES.cadence);
 
   // ── Top Files ──────────────────────────────────────────────────────────
   const filesRaw = (BUNDLE.files_by_churn || []).slice(0, 15);
@@ -447,7 +478,7 @@
           </div>
         `).join("")}
       </div>
-    `);
+    `, THEMES["top-files"]);
   }
 
   // ── Languages ──────────────────────────────────────────────────────────
@@ -460,12 +491,12 @@
       <h2 class="section display">In which tongues.</h2>
       <div class="stack-bar" id="lang-bar">
         ${top.map((l, i) => `
-          <div data-target-pct="${(l.lines / total) * 100}" style="background:${LANG_PALETTE[i % LANG_PALETTE.length]}"></div>
+          <div data-target-pct="${(l.lines / total) * 100}" style="background:${LANG_PALETTE_DARK[i % LANG_PALETTE_DARK.length]}"></div>
         `).join("")}
       </div>
       <div class="stack-legend">
         ${top.map((l, i) => `
-          <span><span class="swatch" style="background:${LANG_PALETTE[i % LANG_PALETTE.length]}"></span>
+          <span><span class="swatch" style="background:${LANG_PALETTE_DARK[i % LANG_PALETTE_DARK.length]}"></span>
           ${escapeHtml(l.ext || "(none)")}<span class="pct">${(l.lines / total * 100).toFixed(1)}%</span></span>
         `).join("")}
       </div>
@@ -479,7 +510,7 @@
           </div>
         `).join("")}
       </div>
-    `);
+    `, THEMES.languages);
   }
 
   // ── Verbs ──────────────────────────────────────────────────────────────
@@ -515,7 +546,7 @@
         `).join("")}
       </div>
       <div class="tagline">${tagline}</div>
-    `);
+    `, THEMES.verbs);
   }
 
   // ── Authors ────────────────────────────────────────────────────────────
@@ -543,7 +574,7 @@
         }).join("")}
       </div>
       ${more > 0 ? `<div class="footnote ui">…and ${more} more.</div>` : ""}
-    `);
+    `, THEMES.authors);
     // Hydrate avatar slots with DOM APIs (no inline event handlers, no
     // user data inside HTML attributes that would be parsed as JS).
     authorsSlide.querySelectorAll(".avatar-slot").forEach((slot) => {
@@ -574,7 +605,7 @@
       <div><div class="label">Window</div><div class="value mono">${escapeHtml(BUNDLE.window?.label || "")}</div></div>
       <div><div class="label">HEAD</div><div class="value mono">${escapeHtml((BUNDLE.repo?.head_sha || "").slice(0,7))}</div></div>
     </div>
-  `);
+  `, THEMES.closer);
 
   // ── Plot rendering ─────────────────────────────────────────────────────
   function renderHeatmap() {
@@ -618,12 +649,12 @@
           rx: 2,
         }),
       ],
-      style: { background: "transparent", color: C.ink, fontFamily: "Geist Mono, monospace", fontSize: 11 },
+      style: { background: "transparent", color: C.cream, fontFamily: "Geist Mono, monospace", fontSize: 11 },
     });
     target.append(plot);
   }
 
-  function renderBar(targetId, data, labels, fill = C.rust) {
+  function renderBar(targetId, data, labels, fill = C.rust, labelColor = C.ink) {
     const target = document.getElementById(targetId);
     if (!target || !window.Plot) return;
     const rows = data.map((v, i) => ({ k: labels[i], v }));
@@ -634,7 +665,7 @@
       marginLeft: 40,
       x: { label: null, tickRotate: 0, type: "band", domain: labels },
       y: { grid: true, label: null, tickSize: 0 },
-      style: { background: "transparent", color: C.ink, fontFamily: "Geist Mono, monospace", fontSize: 11 },
+      style: { background: "transparent", color: labelColor, fontFamily: "Geist Mono, monospace", fontSize: 11 },
       marks: [
         Plot.barY(rows, { x: "k", y: "v", fill, rx: 2 }),
       ],
@@ -709,8 +740,8 @@
     });
 
     // Charts render eagerly so deep-link/teleport navigation always shows them.
-    renderBar("dow-chart", BUNDLE.by_dow || [], DOW, C.rust);
-    renderBar("hour-chart", BUNDLE.by_hour || [], Array.from({length:24}, (_,i)=>String(i).padStart(2,"0")), C.sage);
+    renderBar("dow-chart", BUNDLE.by_dow || [], DOW, C.rust, C.cream);
+    renderBar("hour-chart", BUNDLE.by_hour || [], Array.from({length:24}, (_,i)=>String(i).padStart(2,"0")), C.sage, C.cream);
     renderHeatmap();
 
     // WONK wiggle on scroll
@@ -742,8 +773,8 @@
       el.style.width = pct + "%";
     });
     if (window.Plot) {
-      renderBar("dow-chart", BUNDLE.by_dow || [], DOW, C.rust);
-      renderBar("hour-chart", BUNDLE.by_hour || [], Array.from({length:24}, (_,i)=>String(i).padStart(2,"0")), C.sage);
+      renderBar("dow-chart", BUNDLE.by_dow || [], DOW, C.rust, C.cream);
+      renderBar("hour-chart", BUNDLE.by_hour || [], Array.from({length:24}, (_,i)=>String(i).padStart(2,"0")), C.sage, C.cream);
       renderHeatmap();
     }
   }
