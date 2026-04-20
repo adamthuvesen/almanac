@@ -42,7 +42,7 @@ def _stub_pipeline(label: str, top_score: float, second_score: float = 0.0):
         # Subjects that reach the model (no first-verb or dep-pattern match)
         (
             "clarify visitor and registration semantics",
-            "renames, moves, restructures, or cleans up code without changing behavior",
+            "removes, deletes, renames, moves, or restructures existing code without changing its behavior",
             0.60,
             0.20,
             "refactor",

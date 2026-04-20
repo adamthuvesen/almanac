@@ -13,13 +13,13 @@ LABEL_TO_VERB: dict[str, str] = {
     "fixes a bug, defect, incorrect behavior, or data quality issue": "fix",
     "updates dependencies, lock files, or third-party package versions": "chore",
     "updates documentation, comments, readme, or descriptions": "docs",
-    "renames, moves, restructures, or cleans up code without changing behavior": "refactor",
+    "removes, deletes, renames, moves, or restructures existing code without changing its behavior": "refactor",
     "adds or updates tests, assertions, or data quality checks": "test",
     "applies formatting, lint-only edits, or purely cosmetic style changes": "style",
     "improves performance, optimizes queries, or reduces cost": "perf",
     "updates build scripts, packaging, compilers, or local development tooling": "build",
     "changes continuous integration, github workflows, or release automation": "ci",
-    "reverts a previous commit or change": "revert",
+    "undoes a specific earlier commit": "revert",
 }
 
 CANDIDATE_LABELS: list[str] = list(LABEL_TO_VERB.keys())
