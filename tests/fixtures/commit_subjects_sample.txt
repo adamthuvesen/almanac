@@ -1,0 +1,235 @@
+# Real commit subjects sampled from local repos, shuffled.
+# Provenance: dbt-transform (2025, 100) + autonomous-ml-research (40)
+#             + autonomous-insights (40) + pulse (25) + planweaver (25)
+# One subject per line. Used by test_classifier_coverage.py to pin
+# the rules-strategy unclear rate and runtime.
+chore: retire bootstrap-claude.sh; align specs with committed MCP contract
+chore(repo): rename repo to autonomous-ml-research
+Self-service ARR: Adding filter for date so we don't include future data and regional breakdown (#3646)
+feat(pulse): add core domain, pipeline, and test suite
+Remove .claude/commands; rely on committed skills only.
+add fieldmarketing to stg_braze_custom_events (#3018)
+add nrr_quota to rm_arr_quota source and staging (#3395)
+chore(openspec): archive collapse-deterministic-layer change
+feat(lib): extract shared runner infrastructure and CandidateResult
+test: add coverage for design validation, from-spec init, and challenge cycle errors
+add pk test to sixsense stg (#2394)
+chore(deps): update github actions dependencies (major) (#3485)
+chore(openspec): archive slack fetch review findings change
+Remove customerio sources, documentation, dependencies (#3464)
+test(runners): add expansion_score runner tests
+remove test for country cluster (#2597)
+feat(workspace): split-pane chat shell with memory and agent nav
+add value_space and ultimate_domain (#3152)
+Add usage comments to deactivated splitio models (#3677)
+docs: add expansion experiments report
+Annika/ana 526 change the definition of is sales assisted (#2476)
+refactor: rename trace to autonomous-insights
+move stg_core_db__votes__history_incremental to regular warehouse (#3567)
+Add row_deletion anonymization to new domain model snapshots with UGD (#2634)
+feat: add publish module for durable findings
+feat(web): add Menti brand fonts and public assets
+feat: add investigation scaffold creation
+feat(research-spec): make source enablement an explicit, user-overridable decision
+filter out brenchmarks (#2451)
+feat(viz): add robot character with glow effects and dance
+feat(cli): resolve case path by date-stripped slug suffix
+adding sources for sana labs (#2435)
+docs: update program spec, runtime contract, and agent instructions
+docs(openspec): add planweaver-llm-synthesis change proposal
+chore: upgrade stefanzweifel/git-auto-commit-action v6 → v7 (#3500)
+add primary_key test and description to all unique ids (#2425)
+Hackathon expansion score (#2437)
+add id + tests for converted_users_paid_self_service (#2424)
+Add active and uuid attributes to user models (#2999)
+remove deleted models from yml (#3432)
+docs: update runtime contract, program, and research-spec for GSC/GA4 sources
+add delete timestamp to deletion_flow_migrated_users_filter (#2325)
+fix deduplication logic (#3090)
+feat(agent): add planning conversation and chat stream runner
+feat: convert stg_core_db__vote_multis__history to incremental (#3692)
+chore(openspec): add readme-cleanup change artifacts
+add snapshot of user data (#3087)
+feat: add validation module
+Delete resources and definitions to/in unused questions tables (#3640)
+docs: rewrite README and consolidate AGENTS.md to repo root
+fix(deps): update dbt packages (#2869)
+Use int__users_domain_and_workspace_features_history in int__churned_users_paid (#3565)
+refactor: rename sherlock to prism
+chore: remove openspec skills and commands
+feat(runners): add runners package init
+feat(mcp): codex TOML + claude default runner, remove Cursor MCP
+update pk and description (#2484)
+enable int__transaction_items again (#2493)
+chore: Remove columns tagged incorrectly as UGD (#2820)
+feat(viz): escape JSON in script tags and compute validation ARR dynamically
+chore: add MCP server config
+feat: convert stg_core_db__series__history to incremental (#3687)
+feat: add file I/O utilities
+readding filter on remigration (#3127)
+docs: fix docstrings
+add verification script (#3292)
+docs(agents): expand AGENTS.md with full agent execution workflow
+feat(viz): add scene sequencer with speech bubbles
+add downstream for org model to be able to compare better (#3713)
+feat: add snowflake live query integration
+sort key email domain dash tables for pruning (#2964)
+experiment(demo-reg): add experiment definition
+[DPT-1634] Propagate missing PII tags (#2603)
+chore: add run artifacts and report examples
+Simplify README: tighten language and remove niche sections
+chore: Rename to more descriptive variable (#3315)
+feat(agent): add external read tools with Notion integration
+refactor(env): drop OPENAI_API_KEY fallback, require OPENAI_MENTI_API_KEY
+add owner_country to workspace aggregates model (#3519)
+rename supportqls to support (#2895)
+refactor(prompts): prioritize depth over breadth in researcher framing
+feat(demo-reg): add data generation script
+Fetch registration date from dim_users_latest in int__customer_journe… (#3724)
+feat(synthesis): add LLM synthesis with context pack
+test: add golden root-cause investigation fixture
+docs(skills): refresh research init and snowflake flow
+test: add demo classification runner tests
+chore(tooling): add shared agent setup
+feat(demo): run demo experiment
+refactor(models): update domain types and decision module
+add historic model for salesforce account csms (#2801)
+add vote event to Braze POC (#2363)
+reupload csv file to fix typo for higher education (#2180)
+Add test model and compiled test file (#3253)
+docs(snowflake): sharpen live-discovery workflow and fix inconsistencies
+feat(demo-cls): add modeling module with train/evaluate
+test: add CLI and loop integration tests
+greatest instead of coalesce (#2772)
+feat(api): add workspace CRUD and initial source ingestion routes
+feat(interpretation): add agent-native interpretation module
+remove workspace_adoption_and_usage_history (#2899)
+add ultiamte domain to stg_planhat__companies (#2764)
+exclude duplicated events (#3120)
+fix: clarify user cohort in user milestone semantic view (#3601)
+Add staging models for braze > mixpanel sync (#3229)
+feat(viz): add robot portrait strip and fix speed button
+chore: add openspec changes and agent tooling
+chore: gitignore openspec/
+Drop references to retired global /snow skill; standardize on /snowflake.
+refactor(pulse): remove stale deterministic modules
+chore: add .agents and .claude skill/command configs, gitignore .codex and .cursor
+experiment(demo-cls): add experiment definition
+feat(agent): add read and write tool registries
+refactor: rename investigation to research (with case for bounded runs)
+ci: use uv run pytest to fix command not found in CI
+add free text column (#2151)
+config: add runner configs for claude and codex
+add num_active_accounts (#2827)
+test(runners): add expansion_amount runner tests
+[DPT-1666] Add has_personal_data_in_email_domain to deleted users model (#2515)
+change to utm_campaign (#3400)
+feat(ui): add theme provider and workspace shell components
+feat: add leads and opportunities semantic views (#3520)
+Add row_deletion anonymization meta fields for questions snapshots (#2640)
+Add row_deletion anonymization meta fields for vote_quiz_texts snapshot (#2633)
+chore(web): add OpenAI Responses streaming spike script
+Simplify README: tighten language, remove niche details
+add owner to historic table for each hierarchy level (#2568)
+fix(experiment): allow underscores in experiment slugs
+handle email duplicates (#2719)
+feat: add layout module with path helpers and slugification
+upgrade sqlfluff to 4.0.4 and apply new rules (#3663)
+scripts: add daily run script for 2026-04-09
+chore: untrack web/ workspace content (keeps files on disk)
+repoint region from account to lead object (#2495)
+chore: add error analysis and expansion_amount data artifacts
+feat(synthesis): add env gating and mock synthesis pipeline
+replace stg_salesforce__acounts with int_subscriptions_history_refined everywhere downstream (#2258)
+fix incremental logic, column name and add pk (#3639)
+prefix semantic views (#3293)
+feat(validation): add design contract checks and root-cause brief templates
+add user_growth model (#3472)
+feat(pulse): polish story presentation
+chore(deps): add catboost, imbalanced-learn, scipy, seaborn, shap
+docs(openspec): scaffold core capability specs
+feat: add diagnostics, signals, evaluation, learnings, and portfolio modules
+Add member lite limit to workspaces (#2838)
+feat(web): add app shell, landing page, and workspace route
+Tove/start prep work for customer journey cleanup (#3652)
+feat: Create temporary model with usage clustering features (#3106)
+Tove/ana 538 filter out hard deleted users (#2530)
+Document committed skill symlinks for Claude, Codex, and Cursor.
+feat(pulse): add review, interpretation, and audience views
+fix(loop): preserve retry cleanup and budget handling
+chore: update docs, config, and experiment templates
+chore: Remove unused source tables (#3665)
+add history model for core_db__groups (#2651)
+chore(repo): trim deps and run tests on prs
+add opportunities yml downstream (#2175)
+Merge pull request #1 from adamthuvesen/claude/simplify-readme-HHRG2
+docs: add code review report and .trees gitignore entry
+Update dependency requests to v2.32.4 [SECURITY] (#2748)
+Remove domain test filtering (#2423)
+fix custom_updated_at where applicable for EU snaps (#2815)
+docs(qa): add QA spec map for manual verification
+feat(decisions): add decision memory log
+docs: add program.md behavioral contract for model-search cycles
+lower email address (#3073)
+test: update test suite for collapsed deterministic layer
+feat: add provenance tracking
+feat(runner): switch claude runner to stream-json output
+Fran add recommended gtm motion cum arr (#3579)
+Filter for only post-presentation CSAT scores (#2833)
+add revenue_segment and potential to dim_opportunities (#3376)
+docs(openspec): archive five completed changes
+chore(gitignore): ignore generated pulse artifacts
+Cynthiahosintian/revan 715 calculate enterprise monthly arr for driver tree (#2319)
+add new planhat user RETL model to consumption layer (#3668)
+add intermediate inc model (#2504)
+docs(openspec): add quarterly-planning change proposal
+chore: remove SERIES_SESSIONS from pipeline (#3632)
+chore: remove notebook, yaml, and csv from lib/expansion_amount
+Annika/add criticality (#2212)
+feat(sources): add GSC and GA4 API integration via CLI
+refactor: rename prism to trace
+chore: initialize project scaffolding
+chore: initial repo setup with gitignore and agent instructions
+docs: add research patterns guide
+chore(deps): lock file maintenance (#3612)
+feat(pulse): redesign enrichment and query as agent-native — remove anthropic SDK
+remove unnecessary join in int__slides_enrichted (#3589)
+feat(enrichment): add LLM-enriched story interpretation
+feat(web): add core types, constants, and JSON-backed store
+docs: add CLAUDE.md symlink to AGENTS.md
+refactor(env): rename OPENAI_MENTI_API_KEY to OPENAI_API_KEY throughout
+Extract first and last user country from user sessions (#2948)
+add latest version of int__users_domain_and_workspace_features_history (#3325)
+refactor(pipeline): wire interpretation and classification into pipeline and runtime
+feat(viz): add game engine with main loop and input handling
+Classify label in vote_text_clusters as UGD not PII (#2556)
+Fix column names in stg_braintree__subscriptions (#2293)
+feat(agent): add agent runtime, system prompt, and in-flight tracking
+feat(query): add pulse ask conversational query interface
+fix(terminal): rename header to Research, add footer spacing and styled run footer
+feat(web): add repo ingestion, workspace mutations, and candidate utils
+feat(prompts): clarify thread scope and surface pending leads in digest
+null --> 0 (#3443)
+feat(demo-cls): add data loading module
+feat(classification): add signal classification module
+experiment(demo-reg): add results and lock files
+Merge pull request #2 from adamthuvesen/adam/loop-improvements
+Deprecate invoices snapshots (#2341)
+docs(readme): rewrite for agent-native Pulse
+take latest country (#2458)
+update currency_type to not have overlapping timeperiods (#2440)
+update how we use salesforce fx rates (#3024)
+fix(modeling): invert SUSPENSION_RATE_L90D baseline direction to -1
+update logic salesforce campaign touchpoints (#2970)
+feat(synthesis): add OpenAI Responses API wrapper
+chore(repo): keep codex and cursor local
+change date and add description (#2470)
+feat(web): add design showcase route and frontend language docs
+chore(openspec): stop tracking local specs
+update support mql definition (#3015)
+chore: add gitignore
+chore(openspec): add collapse-deterministic-layer specs, plans, and reviews
+hardcode CS for renewal baslines (#2510)
+test(loop): add research enforcement and error analysis nudge tests
+refactor(core): remove intake auto-classification, swap knowledge for gsc source
+add ultimate_domain metrics model (#3143)

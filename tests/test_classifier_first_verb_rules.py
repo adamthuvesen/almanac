@@ -73,12 +73,15 @@ def test_first_verb_case_insensitive() -> None:
     assert match_first_verb("Remove old thing") == ("refactor", 1.0)
 
 
-def test_update_is_not_in_rule_table() -> None:
-    assert match_first_verb("update the readme") is None
+def test_update_has_default_refactor_mapping() -> None:
+    # As of expand-classifier-rules, `update` defaults to refactor.
+    # Bigram overrides (e.g. "update readme" -> docs) run before
+    # first-verb and are covered in test_classifier_rules.py.
+    assert match_first_verb("update the API") == ("refactor", 1.0)
 
 
-def test_change_is_not_in_rule_table() -> None:
-    assert match_first_verb("change the API") is None
+def test_change_has_default_refactor_mapping() -> None:
+    assert match_first_verb("change the API") == ("refactor", 1.0)
 
 
 def test_rules_strategy_uses_first_verb() -> None:
