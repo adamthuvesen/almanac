@@ -14,6 +14,7 @@ from almanac.classifier.preprocess import preprocess
 __all__ = [
     "BUNDLE_VERB_KEYS",
     "classify",
+    "classify_batch",
     "clear_cache",
     "has_transformers",
     "reset_auto_strategy",
@@ -78,3 +79,40 @@ def classify(subject: str, body: str | None, *, strategy: str) -> tuple[str, flo
 
     set_cached(key, result)
     return result
+
+
+def classify_batch(
+    subjects: list[str], *, strategy: str
+) -> list[tuple[str, float]]:
+    eff = _effective_strategy(strategy)
+    if strategy == "zeroshot":
+        _ensure_zeroshot_allowed()
+
+    # Preprocess and split into cache hits vs. pending
+    clean_subjects = [preprocess(s) for s in subjects]
+    results: list[tuple[str, float] | None] = [None] * len(subjects)
+    pending_indices: list[int] = []
+    pending_clean: list[str] = []
+
+    for i, clean in enumerate(clean_subjects):
+        key = classification_cache_key(clean, None)
+        cached = get_cached(key)
+        if cached is not None:
+            results[i] = cached
+        else:
+            pending_indices.append(i)
+            pending_clean.append(clean)
+
+    if pending_clean:
+        if eff == "rules":
+            batch_results = [rules.classify_commit(s, None) for s in pending_clean]
+        else:
+            from almanac.classifier import zeroshot
+
+            batch_results = zeroshot.classify_batch(pending_clean)
+
+        for idx, clean, result in zip(pending_indices, pending_clean, batch_results):
+            set_cached(classification_cache_key(clean, None), result)
+            results[idx] = result
+
+    return results  # type: ignore[return-value]

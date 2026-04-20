@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import date, datetime
 
-from almanac.classifier import BUNDLE_VERB_KEYS, classify
+from almanac.classifier import BUNDLE_VERB_KEYS, classify_batch
 from almanac.ingest import Commit, coalesce_identities
 from almanac.window import Window
 
@@ -76,10 +76,9 @@ def compute_bundle(
             "author": last_c.author_name,
         }
 
-    # Verb classification
+    # Verb classification — batch all subjects in one call
     verbs: dict[str, int] = {k: 0 for k in BUNDLE_VERB_KEYS}
-    for c in commits:
-        verb, _ = classify(c.subject, None, strategy=classifier_strategy)
+    for verb, _ in classify_batch([c.subject for c in commits], strategy=classifier_strategy):
         verbs[verb] += 1
 
     # by_dow and by_hour using author-local time
