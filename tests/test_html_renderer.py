@@ -1,0 +1,226 @@
+import json
+import os
+
+from almanac.renderer.html import _safe_json, render_html, write_html
+
+
+def _minimal_bundle() -> dict:
+    return {
+        "schema_version": 1,
+        "repo": {"path": "/tmp/x", "name": "demo", "head_sha": "abcdef1234567890"},
+        "window": {"since": "2025-01-01", "until": "2025-12-31", "label": "2025"},
+        "commit_count": 3,
+        "merge_count": 0,
+        "first_commit": {
+            "sha": "deadbeef",
+            "ts": "2025-01-02T10:00:00+00:00",
+            "subject": "init",
+            "author": "Ada",
+        },
+        "last_commit": None,
+        "verbs": {
+            "feat": 2,
+            "fix": 1,
+            "chore": 0,
+            "docs": 0,
+            "refactor": 0,
+            "test": 0,
+            "style": 0,
+            "perf": 0,
+            "build": 0,
+            "ci": 0,
+            "revert": 0,
+            "unclear": 0,
+        },
+        "by_dow": [1, 0, 0, 1, 1, 0, 0],
+        "by_hour": [0] * 24,
+        "lines_added": 100,
+        "lines_removed": 5,
+        "biggest_commit": {
+            "sha": "x",
+            "delta": 50,
+            "subject": "big",
+            "ts": "2025-02-01",
+        },
+        "longest_streak_days": 2,
+        "longest_gap_days": 30,
+        "files_by_churn": [{"path": "src/a.py", "edits": 3, "lines": 80}],
+        "languages": [{"ext": ".py", "lines": 95, "share": 1.0}],
+        "authors": [
+            {
+                "name": "Ada",
+                "emails": ["ada@x"],
+                "commits": 3,
+                "lines_added": 100,
+                "lines_removed": 5,
+                "first_ts": "2025-01-02T10:00:00+00:00",
+                "last_ts": "2025-03-01T10:00:00+00:00",
+            }
+        ],
+        "subjects_sample": ["init", "feat: x", "fix: y"],
+        "commits_per_day": [
+            {"date": "2025-01-01", "count": 0},
+            {"date": "2025-01-02", "count": 1},
+        ],
+    }
+
+
+def test_render_html_returns_full_document():
+    out = render_html(_minimal_bundle())
+    assert out.startswith("<!doctype html>")
+    assert "</html>" in out
+
+
+def test_render_html_includes_palette_custom_properties():
+    out = render_html(_minimal_bundle())
+    for token in ("--cream:", "--ink:", "--rust:", "--sage:", "--ochre:", "--plum:"):
+        assert token in out, f"missing palette token {token}"
+
+
+def test_render_html_inlines_bundle_json():
+    bundle = _minimal_bundle()
+    out = render_html(bundle)
+    assert 'id="almanac-bundle"' in out
+    assert 'type="application/json"' in out
+    # The serialized commit_count value should be substituted in.
+    assert '"commit_count": 3' in out or '"commit_count":3' in out
+
+
+def test_render_html_pins_cdn_versions():
+    out = render_html(_minimal_bundle())
+    assert "gsap@3.12.5" in out
+    assert "ScrollTrigger.min.js" in out
+    assert "@observablehq/plot@0.6" in out
+    assert "d3@7" in out
+    assert "@latest" not in out
+
+
+def test_render_html_handles_unicode_and_special_chars():
+    bundle = _minimal_bundle()
+    bundle["first_commit"]["subject"] = "feat: éclair — ✨"
+    out = render_html(bundle)
+    assert "éclair" in out
+
+
+def test_write_html_default_path_creates_file(tmp_path, monkeypatch):
+    bundle = _minimal_bundle()
+    monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
+    p = write_html(bundle, None)
+    assert p.exists()
+    text = p.read_text(encoding="utf-8")
+    assert text.startswith("<!doctype html>")
+
+
+def test_write_html_explicit_path(tmp_path):
+    target = tmp_path / "wrap.html"
+    p = write_html(_minimal_bundle(), target)
+    assert p == target.resolve()
+    assert target.exists()
+
+
+def test_default_write_filename_includes_window_and_sha(tmp_path, monkeypatch):
+    monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
+    p = write_html(_minimal_bundle(), None)
+    assert "2025" in p.name
+    assert "abcdef1" in p.name
+    assert p.suffix == ".html"
+    assert p.name.startswith("almanac-demo-2025-abcdef1-")
+
+
+def test_default_write_refuses_symlink_target(tmp_path, monkeypatch):
+    monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
+    # Plant a decoy file that an attacker might try to clobber, and a
+    # symlink named like the old predictable output path pointing to it.
+    victim = tmp_path / "victim.txt"
+    victim.write_text("do-not-touch", encoding="utf-8")
+    predictable = tmp_path / "almanac-demo-2025-abcdef1.html"
+    os.symlink(victim, predictable)
+
+    p = write_html(_minimal_bundle(), None)
+
+    # NamedTemporaryFile uses O_EXCL + a random suffix, so the symlink
+    # target must be untouched and the real report lives elsewhere.
+    assert p != predictable
+    assert victim.read_text(encoding="utf-8") == "do-not-touch"
+    assert p.exists()
+    assert p.read_text(encoding="utf-8").startswith("<!doctype html>")
+
+
+def test_bundle_with_closing_script_tag_does_not_break_out():
+    bundle = _minimal_bundle()
+    bundle["first_commit"]["subject"] = "</script><img src=x onerror=alert(1)>"
+    out = render_html(bundle)
+    # The dangerous substring must not appear verbatim in the rendered HTML;
+    # it must be escaped as <\/script>.
+    assert "</script><img src=x" not in out
+    assert "<\\/script><img src=x" in out
+    # The bundle script block itself is still present exactly once, and the
+    # template's own </script> closers remain intact.
+    assert out.count('id="almanac-bundle"') == 1
+
+
+def test_no_inline_onerror_in_rendered_html():
+    bundle = _minimal_bundle()
+    bundle["authors"] = [
+        {
+            "name": "Alice Cooper",
+            "emails": ["alice@example.com"],
+            "commits": 2,
+            "lines_added": 10,
+            "lines_removed": 1,
+            "first_ts": "2025-01-02T10:00:00+00:00",
+            "last_ts": "2025-03-01T10:00:00+00:00",
+        },
+        {
+            "name": "Bob",
+            "emails": ["bob@example.com"],
+            "commits": 1,
+            "lines_added": 5,
+            "lines_removed": 0,
+            "first_ts": "2025-01-02T10:00:00+00:00",
+            "last_ts": "2025-03-01T10:00:00+00:00",
+        },
+    ]
+    out = render_html(bundle)
+    assert "onerror=" not in out
+    assert "cryptoMd5" not in out
+
+
+def test_initials_with_backslash_and_quote_do_not_break():
+    bundle = _minimal_bundle()
+    bundle["authors"] = [
+        {
+            "name": "A\\' Bob",
+            "emails": ["a@x"],
+            "commits": 1,
+            "lines_added": 1,
+            "lines_removed": 0,
+            "first_ts": "2025-01-02T10:00:00+00:00",
+            "last_ts": "2025-03-01T10:00:00+00:00",
+        },
+    ]
+    out = render_html(bundle)
+    # Name flows into the JSON bundle (client-side code HTML-escapes it
+    # at render time via escapeHtml). What matters here is that no
+    # inline event handler references author-derived data.
+    assert "onerror=" not in out
+    # The name survives JSON encoding without corrupting the script block.
+    assert '"A\\\\\' Bob"' in out
+
+
+def test_safe_json_roundtrips_valid_json():
+    bundle = _minimal_bundle()
+    bundle["first_commit"]["subject"] = "mix </script> and \u2028 and \u2029"
+    escaped = _safe_json(bundle)
+    # `JSON.parse` in the browser would accept `<\/`; Python's json.loads
+    # also accepts it because `\/` is a valid escape in JSON strings.
+    parsed = json.loads(escaped)
+    assert parsed == bundle
+
+
+def test_render_html_does_not_break_on_dollar_signs_in_data():
+    bundle = _minimal_bundle()
+    bundle["first_commit"]["subject"] = "fix: $PATH handling and $BUNDLE_JSON literal"
+    out = render_html(bundle)
+    # safe_substitute leaves stray $X alone, so the JSON content is preserved
+    assert "$PATH" in out
