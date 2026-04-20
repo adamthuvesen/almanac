@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+# contains author emails from real repos
+almanac.json
+.ghost/
+
+# Tooling / agent copies live globally (opsx skills, Cursor home, etc.)
+.agents/
+.claude/
+.cursor/
+.codex/
+
+# OpenSpec proposals are workflow artifacts — not part of the public project
+openspec/
