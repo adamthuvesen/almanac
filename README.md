@@ -4,6 +4,8 @@ Spotify Wrapped for your codebase.
 
 Pick a repo and a time range. Get commit velocity, code churn, hottest files, language breakdown, and author stats — as JSON, a TTY slideshow, or a self-contained HTML report.
 
+![Calendar heatmap slide — one cell per day, cream = no commits, rust = busiest](docs/heatmap.png)
+
 ## Usage
 
 ```bash
