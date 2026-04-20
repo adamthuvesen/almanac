@@ -23,87 +23,60 @@ _VERB_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# First-token → verb mappings for unambiguous English verbs (>95% precision).
-# Keys are lowercase first words; values are Conventional Commits verb tokens.
-FIRST_VERB_RULES: dict[str, str] = {
+# Base verb → CC type. Add one line here to cover a new verb family.
+_BASE_VERBS: dict[str, str] = {
     # New capability
-    "add": "feat",
-    "adding": "feat",
-    "adds": "feat",
-    "added": "feat",
+    "add":       "feat",
     "introduce": "feat",
-    "introduces": "feat",
     "implement": "feat",
-    "implements": "feat",
-    "create": "feat",
-    "creates": "feat",
-    "created": "feat",
-    "extend": "feat",
-    "extends": "feat",
-    "extended": "feat",
-    "extending": "feat",
+    "create":    "feat",
+    "extend":    "feat",
     # Restructuring / moving code
-    "remove": "refactor",
-    "removes": "refactor",
-    "removed": "refactor",
-    "delete": "refactor",
-    "deletes": "refactor",
-    "deleted": "refactor",
-    "drop": "refactor",
-    "drops": "refactor",
-    "dropped": "refactor",
-    "rename": "refactor",
-    "renames": "refactor",
-    "renamed": "refactor",
-    "move": "refactor",
-    "moves": "refactor",
-    "moved": "refactor",
-    "migrate": "refactor",
-    "migrates": "refactor",
-    "migrated": "refactor",
-    "refactor": "refactor",
-    "refactors": "refactor",
-    "refactored": "refactor",
-    "replace": "refactor",
-    "replaces": "refactor",
-    "replaced": "refactor",
-    "extract": "refactor",
-    "extracts": "refactor",
-    "extracted": "refactor",
+    "remove":    "refactor",
+    "delete":    "refactor",
+    "drop":      "refactor",
+    "rename":    "refactor",
+    "move":      "refactor",
+    "migrate":   "refactor",
+    "refactor":  "refactor",
+    "replace":   "refactor",
+    "extract":   "refactor",
     # Reverts
-    "revert": "revert",
-    "reverts": "revert",
-    "reverted": "revert",
+    "revert":    "revert",
     # Bug fixes
-    "fix": "fix",
-    "fixes": "fix",
-    "fixed": "fix",
-    "fixing": "fix",
-    "handle": "fix",
-    "handles": "fix",
-    "handled": "fix",
-    "correct": "fix",
-    "corrects": "fix",
-    "corrected": "fix",
-    "address": "fix",
-    "addresses": "fix",
-    "addressed": "fix",
-    "addressing": "fix",
+    "fix":       "fix",
+    "handle":    "fix",
+    "correct":   "fix",
+    "address":   "fix",
     # Dependency / tooling bumps
-    "bump": "chore",
-    "bumps": "chore",
-    "bumped": "chore",
-    "upgrade": "chore",
-    "upgrades": "chore",
-    "upgraded": "chore",
+    "bump":      "chore",
+    "upgrade":   "chore",
     # Access / permissions management
-    "grant": "chore",
-    "grants": "chore",
-    "granted": "chore",
+    "grant":     "chore",
     # Credential / secret rotation
-    "rotate": "chore",
-    "rotates": "chore",
-    "rotated": "chore",
+    "rotate":    "chore",
+}
+
+# Verbs whose final consonant doubles before -ed/-ing (e.g. drop → dropped).
+_CVC_DOUBLE: frozenset[str] = frozenset({"drop"})
+
+
+def _inflect(verb: str) -> list[str]:
+    """Return [base, 3ps, past, gerund] for a regular English verb."""
+    if verb.endswith("e"):                        # create → creates, created, creating
+        return [verb, verb + "s", verb + "d", verb[:-1] + "ing"]
+    if re.search(r"(x|sh|ch|ss)$", verb):         # fix → fixes; address → addresses
+        return [verb, verb + "es", verb + "ed", verb + "ing"]
+    if verb in _CVC_DOUBLE:                       # drop → dropped, dropping
+        return [verb, verb + "s", verb + verb[-1] + "ed", verb + verb[-1] + "ing"]
+    return [verb, verb + "s", verb + "ed", verb + "ing"]
+
+
+# First-token → CC type, auto-generated from _BASE_VERBS.
+FIRST_VERB_RULES: dict[str, str] = {
+    form: cc_type
+    for base, cc_type in _BASE_VERBS.items()
+    for form in _inflect(base)
 }
 
 # Compound patterns for Renovate/Dependabot-style dependency updates.
