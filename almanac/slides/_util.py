@@ -51,24 +51,17 @@ def emphasize(text: str, color_name: str = "rust") -> str:
 
 
 def subdued(text: str, color_name: str = "mist") -> str:
-    """Dimmed, de-emphasized text — good for labels and secondary info."""
     return ansi.dim() + ansi.truecolor(*ansi.PALETTE[color_name]) + text + ansi.reset()
 
 
 def rule(width: int, color: str = "mist") -> str:
-    """A thin centered horizontal rule for visual section breaks."""
     inner = "─" * min(width - 4, 52)
     line = ansi.dim() + ansi.truecolor(*ansi.PALETTE[color]) + inner + ansi.reset()
     return center(line, width)
 
 
 def microcopy_line(bundle: dict, slot: str, color: str = "olive") -> str | None:
-    """Return a sanitized, painted caption from ``bundle.microcopy[slot]``.
-
-    Returns ``None`` when the slot is missing, ``None``, or empty so the
-    caller can leave its layout untouched (no blank line in place of a
-    missing caption).
-    """
+    """Return a sanitized, painted caption from ``bundle.microcopy[slot]``, or None."""
     text = (bundle.get("microcopy") or {}).get(slot)
     if not text:
         return None

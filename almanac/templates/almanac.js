@@ -1,13 +1,12 @@
   const BUNDLE = JSON.parse(document.getElementById("almanac-bundle").textContent);
+  // Exposed for ad-hoc devtools inspection.
   window.BUNDLE = BUNDLE;
 
-  // Palette
   const C = {
     cream: "#F4EDE0", ink: "#1C1612", rust: "#A94F2E",
     sage:  "#5B6A47", ochre: "#C9A24A", plum: "#4A2E3B",
   };
 
-  // Utilities
   const fmt = new Intl.NumberFormat("en-US");
   const escapeHtml = (s) =>
     String(s ?? "").replace(/[&<>"']/g, (c) => ({
@@ -31,7 +30,6 @@
     build: "#B896C8", ci: C.sage, revert: C.rust,
     unclear: "rgba(244, 237, 224, 0.30)",
   };
-  const LANG_PALETTE = [C.rust, C.sage, C.ochre, C.plum, C.ink];
   const LANG_PALETTE_DARK = [C.rust, C.sage, C.ochre, "#5B9E6A", C.cream];
 
   const THEMES = {
@@ -47,7 +45,6 @@
     closer:         { bg: "#1D3327", fg: C.cream, accent: "#7EC8A0" },
   };
 
-  // Slide builder helpers
   const root = document.getElementById("root");
   const make = (tag, attrs = {}, html = "") => {
     const el = document.createElement(tag);
@@ -686,9 +683,6 @@
 
     function goTo(i) {
       i = Math.max(0, Math.min(sections.length - 1, i));
-      if (i === current && !locked) {
-        // already there — still smooth-correct any drift
-      }
       current = i;
       locked = true;
       sections[i].scrollIntoView({ behavior: "smooth", block: "start" });

@@ -25,13 +25,8 @@ def _humanize(n: int) -> str:
     return f"{n:,}"
 
 
-_PLURAL_OVERRIDES: dict[str, str] = {}
-
-
 def _pluralize(word: str, n: int) -> str:
-    if n == 1:
-        return word
-    return _PLURAL_OVERRIDES.get(word, word + "s")
+    return word if n == 1 else word + "s"
 
 
 def _hour_phrase(h: int) -> str:

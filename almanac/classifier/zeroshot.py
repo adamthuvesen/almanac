@@ -94,9 +94,9 @@ def classify_batch(subjects: list[str]) -> list[tuple[str, float]]:
         for idx, result in zip(unclear_indices, raw):
             results[idx] = _score_result(result)
 
-    completed: list[tuple[str, float]] = []
-    for result in results:
-        if result is None:
-            raise RuntimeError("zeroshot batch left an unfilled result")
-        completed.append(result)
-    return completed
+    out: list[tuple[str, float]] = []
+    for r in results:
+        if r is None:
+            raise RuntimeError("classify_batch produced an unfilled result slot")
+        out.append(r)
+    return out

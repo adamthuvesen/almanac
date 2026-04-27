@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from almanac.renderer.ansi import hbar
-from almanac.renderer.ansi import hbar
 from almanac.slides._util import (
     assemble,
     center,
@@ -43,7 +42,7 @@ class _TopFiles:
         path_w = min(40, max(12, width // 3))
         count_w = 6
         bar_w = max(6, width - rank_w - path_w - count_w - 5)
-        max_edits = max(f["edits"] for f in shown) if shown else 0
+        max_edits = max(f["edits"] for f in shown)
 
         for i, f in enumerate(shown):
             path = sanitize_tty(f["path"])

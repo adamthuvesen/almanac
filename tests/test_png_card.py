@@ -223,11 +223,11 @@ def test_cli_png_fails_gracefully_without_playwright(
     sp_run = subprocess.run
     called_git: list[bool] = []
 
-    def _no_git(*a: object, **k: object) -> subprocess.CompletedProcess[bytes]:  # type: ignore[override]
+    def _no_git(*a, **k):
         cmd = a[0] if a else k.get("args")
         if cmd and list(cmd)[:1] == ["git"]:
             called_git.append(True)
-        return sp_run(*a, **k)  # type: ignore[misc]
+        return sp_run(*a, **k)
 
     monkeypatch.setattr(subprocess, "run", _no_git)
     r = CliRunner()

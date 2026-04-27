@@ -1,5 +1,5 @@
 import subprocess
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -40,16 +40,9 @@ def _decode(b: bytes) -> str:
     return b.decode("utf-8", errors="replace")
 
 
-def _author_local(ts: str) -> datetime:
-    return datetime.fromisoformat(ts).replace(tzinfo=None)
-
-
 def _in_window(commit: Commit, window: Window) -> bool:
     dt = datetime.fromisoformat(commit.ts)
-    if window.since.tzinfo is None:
-        candidate = _author_local(commit.ts)
-    else:
-        candidate = dt
+    candidate = dt.replace(tzinfo=None) if window.since.tzinfo is None else dt
     return window.since <= candidate <= window.until
 
 
@@ -108,13 +101,12 @@ def _parse_numstat_z(stream: bytes) -> list[FileChange]:
 
 
 def _parse_log_stream(raw: bytes) -> list[Commit]:
-    # Each commit starts with \x1e emitted by the --pretty format.
+    # Each commit starts with \x1e (from --pretty); header and numstat split on first \n.
     blocks = raw.split(b"\x1e")
     commits: list[Commit] = []
     for block in blocks:
         if not block.strip():
             continue
-        # Split header from numstat stream on the first \n.
         nl = block.find(b"\n")
         if nl < 0:
             header_bytes, numstat_bytes = block, b""
@@ -182,13 +174,9 @@ def iter_commits(
 
 
 def coalesce_identities(commits: list[Commit]) -> dict[str, str]:
-    email_names: dict[str, Counter] = {}
+    email_names: dict[str, Counter] = defaultdict(Counter)
     for c in commits:
-        email = c.author_email.lower()
-        if email not in email_names:
-            email_names[email] = Counter()
-        email_names[email][c.author_name] += 1
-
+        email_names[c.author_email.lower()][c.author_name] += 1
     return {
         email: name_counter.most_common(1)[0][0]
         for email, name_counter in email_names.items()

@@ -54,10 +54,6 @@ _LANG_PATHS: tuple[str, ...] = (
 )
 
 
-def _dt(ts: str) -> datetime:
-    return datetime.fromisoformat(ts)
-
-
 def _build_synthetic_commits() -> list[Commit]:
     """Assemble a deterministic, chronologically ordered commit stream (no random)."""
     out: list[Commit] = []
@@ -184,7 +180,7 @@ def _build_synthetic_commits() -> list[Commit]:
                 cidx += 1
         day += timedelta(days=1)
 
-    out.sort(key=lambda c: _dt(c.ts))
+    out.sort(key=lambda c: datetime.fromisoformat(c.ts))
     return out
 
 
@@ -261,7 +257,7 @@ def make_demo_bundle() -> dict:
         "merge_count": merge_count,
         "first_commit": first_commit,
         "last_commit": last_commit,
-        "verbs": dict(verbs),
+        "verbs": verbs,
         "by_dow": by_dow,
         "by_hour": by_hour,
         "lines_added": total_added,

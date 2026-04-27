@@ -11,21 +11,11 @@ class Window(NamedTuple):
 
 
 def _parse_boundary(value: str, *, end_of_day: bool) -> datetime:
-    """Parse `--since` / `--until` values with these rules.
-
-    - Bare date (``YYYY-MM-DD``) → start-of-day for ``since``,
-      end-of-day for ``until``. Returned naive so it compares against
-      author-local ``%aI`` timestamps.
-    - ISO string with tz → preserve tz.
-    - ISO string without tz → preserve naivety.
-    """
+    """Parse a `--since` / `--until` value. Bare `YYYY-MM-DD` becomes
+    start-of-day (since) or end-of-day (until); ISO strings preserve tz."""
     dt = datetime.fromisoformat(value)
-    if len(value) == 10 and "T" not in value:
-        dt = (
-            dt.replace(hour=23, minute=59, second=59, microsecond=999999)
-            if end_of_day
-            else dt
-        )
+    if end_of_day and len(value) == 10 and "T" not in value:
+        dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
     return dt
 
 
@@ -38,9 +28,7 @@ def resolve_window(
     if now is None:
         now = datetime.now().replace(tzinfo=None)
     elif now.tzinfo is not None:
-        # Accept tz-aware `now` from callers (tests) but strip the tz so
-        # window bounds stay in the same convention as author-local
-        # timestamps parsed from `%aI`.
+        # Strip tz so window bounds stay in the author-local convention used by `%aI`.
         now = now.replace(tzinfo=None)
 
     if year is not None and (since is not None or until is not None):

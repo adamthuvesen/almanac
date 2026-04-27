@@ -325,10 +325,15 @@
     white-space: nowrap;
   }
   .file-bars .bar-track { background: rgba(28,22,18,0.06); height: 18px; border-radius: 3px; overflow: hidden; }
-  .file-bars .bar { background: var(--slide-accent, var(--plum)); height: 100%; width: 0; transition: width 0.6s cubic-bezier(.5,.05,.2,1); }
+  .file-bars .bar {
+    background: var(--slide-accent, var(--plum));
+    height: 100%;
+    width: 0;
+    cursor: pointer;
+    transition: width 0.6s cubic-bezier(.5,.05,.2,1);
+  }
   .file-bars .edits { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: var(--accent, var(--rust)); }
   .file-bars .row.has-bar { grid-template-columns: 320px 1fr 80px; }
-  .file-bars .bar { cursor: pointer; }
   .file-bars .receipts-panel {
     grid-column: 1 / -1;
     list-style: none;

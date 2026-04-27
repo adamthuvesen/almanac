@@ -14,10 +14,6 @@ COMEBACK_RETURN_WINDOW = 14
 COMEBACK_MIN_COMMITS = 5
 
 
-def _parse_ts(ts: str) -> datetime:
-    return datetime.fromisoformat(ts)
-
-
 class _CommitFacts(NamedTuple):
     commit: Commit
     dt: datetime
@@ -84,7 +80,7 @@ def _compute_streak_gap(dates: list[date]) -> _StreakGap:
 def _build_commit_facts(commits: list[Commit]) -> list[_CommitFacts]:
     facts: list[_CommitFacts] = []
     for c in commits:
-        dt = _parse_ts(c.ts)
+        dt = datetime.fromisoformat(c.ts)
         facts.append(
             _CommitFacts(
                 commit=c,
@@ -419,8 +415,6 @@ def compute_bundle(
     total_added, total_removed, biggest_commit = _line_totals_and_biggest(facts)
     commit_dates = [fact.day for fact in facts]
     streak_gap = _compute_streak_gap(commit_dates)
-    longest_streak = streak_gap.streak_days
-    longest_gap = streak_gap.gap_days
     files_by_churn, languages = _files_and_languages(commits)
     authors = _authors(facts, canonical)
     commits_per_day = _dense_commits_per_day(facts, window)
@@ -455,14 +449,14 @@ def compute_bundle(
         "merge_count": merge_count,
         "first_commit": first_commit,
         "last_commit": last_commit,
-        "verbs": dict(verbs),
+        "verbs": verbs,
         "by_dow": by_dow,
         "by_hour": by_hour,
         "lines_added": total_added,
         "lines_removed": total_removed,
         "biggest_commit": biggest_commit,
-        "longest_streak_days": longest_streak,
-        "longest_gap_days": longest_gap,
+        "longest_streak_days": streak_gap.streak_days,
+        "longest_gap_days": streak_gap.gap_days,
         "files_by_churn": files_by_churn,
         "languages": languages,
         "authors": authors,

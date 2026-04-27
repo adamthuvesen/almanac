@@ -1,5 +1,3 @@
-"""Almanac slide modules. Each module exports a Slide-protocol instance as `slide`."""
-
 from almanac.slides.authors import slide as authors_slide
 from almanac.slides.cadence import slide as cadence_slide
 from almanac.slides.cover import slide as cover_slide

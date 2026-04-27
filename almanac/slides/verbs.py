@@ -45,7 +45,6 @@ class _Verbs:
         if total <= 0:
             return assemble(lines, width, height)
 
-        # Sort by count desc, drop zero counts
         ranked = sorted(
             [(k, v) for k, v in verbs.items() if v > 0],
             key=lambda kv: -kv[1],

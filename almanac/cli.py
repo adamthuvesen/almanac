@@ -23,9 +23,7 @@ Install almanac[png] to enable PNG export:
 
 def _ensure_playwright_for_png() -> None:
     try:
-        import importlib
-
-        importlib.import_module("playwright.sync_api")
+        import playwright.sync_api  # noqa: F401
     except ImportError:
         click.echo(_PNG_INSTALL_HINT, err=True)
         raise SystemExit(1)

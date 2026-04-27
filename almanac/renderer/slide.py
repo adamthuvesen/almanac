@@ -14,14 +14,10 @@ class Slide(Protocol):
 
 
 def _has_data(bundle: dict, key: str) -> bool:
-    if key not in bundle:
-        return False
-    v = bundle[key]
-    if v is None:
-        return False
+    v = bundle.get(key)
     if isinstance(v, (list, dict, str, tuple, set, frozenset)):
         return len(v) > 0
-    return True
+    return v is not None
 
 
 def filter_slides(slides: list[Slide], bundle: dict) -> list[Slide]:

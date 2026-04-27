@@ -38,18 +38,13 @@ VALID_THEMES: frozenset[str] = frozenset(THEME_CHOICES)
 
 def resolve_theme(name: str) -> str:
     key = (name or "").strip().lower()
-    for t in THEME_CHOICES:
-        if t == key:
-            return t
-    names = ", ".join(THEME_CHOICES)
-    raise ValueError(f"theme must be one of: {names}")
+    if key in VALID_THEMES:
+        return key
+    raise ValueError(f"theme must be one of: {', '.join(THEME_CHOICES)}")
 
 
 def _theme_attr(theme: str) -> str:
-    if theme not in VALID_THEMES:
-        names = ", ".join(THEME_CHOICES)
-        raise ValueError(f"theme must be one of: {names}")
-    return f' data-theme="{theme}"'
+    return f' data-theme="{resolve_theme(theme)}"'
 
 
 def render_html(bundle: dict, theme: str = "classic") -> str:

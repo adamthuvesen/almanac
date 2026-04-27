@@ -18,7 +18,6 @@ _DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def _bar_color(value: int, max_val: int, on_color: str, off_color: str = "mist") -> str:
-    """Return the bar color based on relative intensity."""
     if max_val <= 0 or value <= 0:
         return off_color
     return on_color if value / max_val >= 0.15 else off_color

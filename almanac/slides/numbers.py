@@ -54,7 +54,6 @@ class _Numbers:
         if height >= 4:
             lines[3] = rule(width)
 
-        # │ separators take 2 visible chars total (between 3 columns)
         sep = paint("│", "mist")
         col_w = (width - 2) // 3
 
@@ -75,7 +74,6 @@ class _Numbers:
             if r + 1 < height:
                 lines[r + 1] = sep.join(value_parts)
 
-        # Thin rule between the two stat rows
         divider_row = start_row + row_h - 1
         if 3 < divider_row < height:
             lines[divider_row] = rule(width)

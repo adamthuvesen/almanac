@@ -54,17 +54,14 @@ def _ensure_zeroshot_allowed() -> None:
         )
 
 
-def _effective_strategy(strategy: str) -> str:
-    if strategy == "auto":
-        return _resolve_auto()
-    return strategy
+def _resolve_strategy(strategy: str) -> str:
+    if strategy == "zeroshot":
+        _ensure_zeroshot_allowed()
+    return _resolve_auto() if strategy == "auto" else strategy
 
 
 def classify(subject: str, body: str | None, *, strategy: str) -> tuple[str, float]:
-    eff = _effective_strategy(strategy)
-    if strategy == "zeroshot":
-        _ensure_zeroshot_allowed()
-
+    eff = _resolve_strategy(strategy)
     clean = preprocess(subject)
     key = classification_cache_key(eff, clean, body)
     cached = get_cached(key)
@@ -83,11 +80,8 @@ def classify(subject: str, body: str | None, *, strategy: str) -> tuple[str, flo
 
 
 def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, float]]:
-    eff = _effective_strategy(strategy)
-    if strategy == "zeroshot":
-        _ensure_zeroshot_allowed()
+    eff = _resolve_strategy(strategy)
 
-    # Preprocess and split into cache hits vs. pending
     clean_subjects = [preprocess(s) for s in subjects]
     results: list[tuple[str, float] | None] = [None] * len(subjects)
     pending_indices: list[int] = []
@@ -114,9 +108,9 @@ def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, flo
             set_cached(classification_cache_key(eff, clean, None), result)
             results[idx] = result
 
-    completed: list[tuple[str, float]] = []
-    for result in results:
-        if result is None:
-            raise RuntimeError("classifier batch left an unfilled result")
-        completed.append(result)
-    return completed
+    out: list[tuple[str, float]] = []
+    for r in results:
+        if r is None:
+            raise RuntimeError("classify_batch produced an unfilled result slot")
+        out.append(r)
+    return out

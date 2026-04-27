@@ -61,7 +61,6 @@ def test_slide_renders_non_empty_at_80x24(slide, bundle):
 
 @pytest.mark.parametrize("slide", SLIDES, ids=[s.name for s in SLIDES])
 def test_slide_renders_at_narrow_min(slide, bundle):
-    # Still shouldn't raise or return empty
     out = slide(bundle, 80, 24)
     assert out
 
