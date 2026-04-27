@@ -12,7 +12,7 @@ REPO = Path(__file__).parent.parent
 
 
 def test_html_out_writes_file_and_skips_browser(tmp_path):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -77,7 +77,7 @@ def test_html_out_combined_with_html_still_skips_browser(tmp_path):
 
 
 def test_json_wins_over_html(tmp_path):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -276,7 +276,7 @@ def test_merge_count_consistent_with_filtered_commits(tmp_path):
 
 
 def test_html_overrides_tty_writes_note(tmp_path):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open"):
         result = runner.invoke(
@@ -320,7 +320,7 @@ def test_invalid_window_exits_nonzero():
 
 
 def test_invalid_theme_exits_with_valid_names_on_stderr(tmp_path):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     target = tmp_path / "nope.html"
     result = runner.invoke(
         main,

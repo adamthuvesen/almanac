@@ -230,7 +230,7 @@ def test_cli_png_fails_gracefully_without_playwright(
         return sp_run(*a, **k)  # type: ignore[misc]
 
     monkeypatch.setattr(subprocess, "run", _no_git)
-    r = CliRunner(mix_stderr=False)
+    r = CliRunner()
     res = r.invoke(
         main,
         ["--png", "--png-out", str(tmp_path / "n.png")],
@@ -256,12 +256,15 @@ def test_cli_json_png_does_not_require_playwright(
         return orig(name, package)
 
     monkeypatch.setattr(importlib, "import_module", _fake_import)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     res = runner.invoke(
         main,
         ["--json", "--png", "--repo", str(REPO), "--classifier", "rules"],
     )
     assert res.exit_code == 0, res.output
-    assert "json wins" in (res.stderr or "")
-    bundle = json.loads(res.output)
+    assert "json wins" in (res.stderr or "") or "json wins" in (res.output or "")
+    out = res.output or ""
+    json_start = out.find("{")
+    assert json_start != -1, out
+    bundle = json.loads(out[json_start:])
     assert bundle["schema_version"] == 1

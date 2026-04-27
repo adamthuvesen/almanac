@@ -83,7 +83,7 @@ def test_demo_html_out_wrapped_theme(tmp_path):
 
 
 def test_demo_conflicts_with_repo():
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         main,
         ["--demo", "--repo", "/tmp"],
