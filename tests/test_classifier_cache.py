@@ -61,3 +61,20 @@ def test_prefix_only_variants_share_cache_entry():
         r2 = classify("PROJ 123 clarify visitor semantics", None, strategy="zeroshot")
     assert calls["n"] == 1
     assert r1 == r2
+
+
+def test_rules_cache_does_not_mask_zeroshot_result():
+    classify("ambiguous words here", None, strategy="rules")
+
+    with (
+        patch("almanac.classifier._ensure_zeroshot_allowed", lambda: None),
+        patch.object(
+            zeroshot_mod,
+            "classify_commit",
+            return_value=("feat", 0.99),
+        ) as spy,
+    ):
+        result = classify("ambiguous words here", None, strategy="zeroshot")
+
+    assert result == ("feat", 0.99)
+    spy.assert_called_once()

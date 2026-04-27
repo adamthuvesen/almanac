@@ -7,8 +7,8 @@ import hashlib
 _CACHE: dict[str, tuple[str, float]] = {}
 
 
-def classification_cache_key(subject: str, body: str | None) -> str:
-    payload = subject + "\n" + (body or "")
+def classification_cache_key(strategy: str, subject: str, body: str | None) -> str:
+    payload = strategy + "\n" + subject + "\n" + (body or "")
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 

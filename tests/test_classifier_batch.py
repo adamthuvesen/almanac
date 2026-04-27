@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from almanac.classifier import classify, classify_batch, clear_cache, reset_auto_strategy
+from almanac.classifier import (
+    classify,
+    classify_batch,
+    clear_cache,
+    reset_auto_strategy,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -40,11 +45,16 @@ def test_mixed_rules_and_unclear():
 
 
 def test_order_preservation():
-    subjects = ["add user model", "fix null check", "one source missed", "feat: ci pipeline"]
+    subjects = [
+        "add user model",
+        "fix null check",
+        "one source missed",
+        "feat: ci pipeline",
+    ]
     results = classify_batch(subjects, strategy="rules")
     assert len(results) == 4
-    assert results[0] == ("feat", 1.0)   # add → feat
-    assert results[1] == ("fix", 1.0)    # fix → fix
+    assert results[0] == ("feat", 1.0)  # add → feat
+    assert results[1] == ("fix", 1.0)  # fix → fix
     assert results[2] == ("unclear", 0.0)
     assert results[3] == ("feat", 1.0)
 

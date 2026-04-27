@@ -32,8 +32,9 @@ def reset_auto_strategy() -> None:
 
 def has_transformers() -> bool:
     try:
+        import torch  # noqa: F401
         import transformers  # noqa: F401
-    except ImportError:
+    except (ImportError, OSError):
         return False
     return True
 
@@ -65,7 +66,7 @@ def classify(subject: str, body: str | None, *, strategy: str) -> tuple[str, flo
         _ensure_zeroshot_allowed()
 
     clean = preprocess(subject)
-    key = classification_cache_key(clean, body)
+    key = classification_cache_key(eff, clean, body)
     cached = get_cached(key)
     if cached is not None:
         return cached
@@ -81,9 +82,7 @@ def classify(subject: str, body: str | None, *, strategy: str) -> tuple[str, flo
     return result
 
 
-def classify_batch(
-    subjects: list[str], *, strategy: str
-) -> list[tuple[str, float]]:
+def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, float]]:
     eff = _effective_strategy(strategy)
     if strategy == "zeroshot":
         _ensure_zeroshot_allowed()
@@ -95,7 +94,7 @@ def classify_batch(
     pending_clean: list[str] = []
 
     for i, clean in enumerate(clean_subjects):
-        key = classification_cache_key(clean, None)
+        key = classification_cache_key(eff, clean, None)
         cached = get_cached(key)
         if cached is not None:
             results[i] = cached
@@ -112,7 +111,12 @@ def classify_batch(
             batch_results = zeroshot.classify_batch(pending_clean)
 
         for idx, clean, result in zip(pending_indices, pending_clean, batch_results):
-            set_cached(classification_cache_key(clean, None), result)
+            set_cached(classification_cache_key(eff, clean, None), result)
             results[idx] = result
 
-    return results  # type: ignore[return-value]
+    completed: list[tuple[str, float]] = []
+    for result in results:
+        if result is None:
+            raise RuntimeError("classifier batch left an unfilled result")
+        completed.append(result)
+    return completed
