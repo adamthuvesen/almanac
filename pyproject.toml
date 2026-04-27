@@ -14,6 +14,9 @@ ml = [
     "transformers>=4.40",
     "sentencepiece>=0.2",
 ]
+png = [
+    "playwright>=1.40",
+]
 
 [project.scripts]
 almanac = "almanac.cli:main"
