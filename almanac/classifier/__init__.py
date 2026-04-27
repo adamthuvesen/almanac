@@ -86,6 +86,7 @@ def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, flo
     results: list[tuple[str, float] | None] = [None] * len(subjects)
     pending_indices: list[int] = []
     pending_clean: list[str] = []
+    pending_keys: list[str] = []
 
     for i, clean in enumerate(clean_subjects):
         key = classification_cache_key(eff, clean, None)
@@ -95,6 +96,7 @@ def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, flo
         else:
             pending_indices.append(i)
             pending_clean.append(clean)
+            pending_keys.append(key)
 
     if pending_clean:
         if eff == "rules":
@@ -104,8 +106,8 @@ def classify_batch(subjects: list[str], *, strategy: str) -> list[tuple[str, flo
 
             batch_results = zeroshot.classify_batch(pending_clean)
 
-        for idx, clean, result in zip(pending_indices, pending_clean, batch_results):
-            set_cached(classification_cache_key(eff, clean, None), result)
+        for idx, key, result in zip(pending_indices, pending_keys, batch_results):
+            set_cached(key, result)
             results[idx] = result
 
     out: list[tuple[str, float]] = []

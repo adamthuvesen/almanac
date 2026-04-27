@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from almanac.renderer import ansi
 from almanac.slides._util import (
     assemble,
     center,
@@ -64,7 +63,7 @@ class _Verbs:
         for i, (verb, count) in enumerate(ranked[:available]):
             share = count / total
             color = _VERB_COLORS.get(verb, "olive")
-            marker = ansi.truecolor(*ansi.PALETTE[color]) + "█" + ansi.reset()
+            marker = paint("█", color)
             row = f"  {marker} {paint(verb.ljust(10), 'ink')} {count:>5}  {paint(f'{share * 100:>5.1f}%', 'plum')}"
             lines[start + i] = row
         return assemble(lines, width, height)

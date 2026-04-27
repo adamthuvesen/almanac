@@ -105,6 +105,14 @@ def _png_pixel_dims(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", b[16:24])
 
 
+def _combined_click_output(result) -> str:
+    output = result.output or ""
+    try:
+        return output + (result.stderr or "")
+    except ValueError:
+        return output
+
+
 def test_card_dimensions(tmp_path) -> None:
     pytest.importorskip("playwright")
     from almanac.renderer.png import render_png
@@ -236,7 +244,7 @@ def test_cli_png_fails_gracefully_without_playwright(
         ["--png", "--png-out", str(tmp_path / "n.png")],
     )
     assert res.exit_code == 1
-    combined = (res.output or "") + (res.stderr or "")
+    combined = _combined_click_output(res)
     assert "almanac[png]" in combined
     assert "playwright" in combined.lower()
     assert "install chromium" in combined.lower()
@@ -262,7 +270,7 @@ def test_cli_json_png_does_not_require_playwright(
         ["--json", "--png", "--repo", str(REPO), "--classifier", "rules"],
     )
     assert res.exit_code == 0, res.output
-    assert "json wins" in (res.stderr or "") or "json wins" in (res.output or "")
+    assert "json wins" in _combined_click_output(res)
     out = res.output or ""
     json_start = out.find("{")
     assert json_start != -1, out

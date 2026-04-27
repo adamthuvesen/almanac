@@ -12,8 +12,12 @@ from almanac.cli import main
 REPO = Path(__file__).parent.parent
 
 
+def _runner() -> CliRunner:
+    return CliRunner(mix_stderr=False)
+
+
 def test_invalid_classifier_exits_nonzero():
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(
         main,
         ["--classifier", "wizard", "--repo", str(REPO), "--year", "2025"],
@@ -33,14 +37,14 @@ def test_zeroshot_without_ml_exits_before_git(tmp_path, monkeypatch):
         return real_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(main, ["--classifier", "zeroshot", "--year", "2025"])
     assert result.exit_code != 0
     assert "almanac[ml]" in (result.stderr or "")
 
 
 def test_classifier_default_is_auto_in_help():
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
     assert "--classifier" in result.output

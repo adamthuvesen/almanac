@@ -11,8 +11,12 @@ from almanac.cli import main
 REPO = Path(__file__).parent.parent
 
 
+def _runner() -> CliRunner:
+    return CliRunner(mix_stderr=False)
+
+
 def test_html_out_writes_file_and_skips_browser(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -38,7 +42,7 @@ def test_html_out_writes_file_and_skips_browser(tmp_path):
 
 def test_html_default_writes_to_temp_and_opens_browser(tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    runner = CliRunner()
+    runner = _runner()
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
             main,
@@ -54,7 +58,7 @@ def test_html_default_writes_to_temp_and_opens_browser(tmp_path, monkeypatch):
 
 
 def test_html_out_combined_with_html_still_skips_browser(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -77,7 +81,7 @@ def test_html_out_combined_with_html_still_skips_browser(tmp_path):
 
 
 def test_json_wins_over_html(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -114,7 +118,7 @@ def _extract_bundle(html: str) -> dict:
 
 
 def test_default_run_has_no_gravatar_hash(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open"):
         result = runner.invoke(
@@ -141,7 +145,7 @@ def test_default_run_has_no_gravatar_hash(tmp_path):
 
 
 def test_gravatar_flag_emits_hashes(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open"):
         result = runner.invoke(
@@ -188,7 +192,7 @@ def _swapcase_email(email: str) -> str:
 
 def test_author_filter_case_insensitive_email(tmp_path):
     _, email = _repo_head_author()
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(
         main,
         [
@@ -210,7 +214,7 @@ def test_author_filter_case_insensitive_email(tmp_path):
 
 def test_author_filter_case_insensitive_name(tmp_path):
     name, _ = _repo_head_author()
-    runner = CliRunner()
+    runner = _runner()
 
     def run(author: str) -> dict:
         res = runner.invoke(
@@ -239,7 +243,7 @@ def test_merge_count_consistent_with_filtered_commits(tmp_path):
     # Without --author, merge_count is derivable from the parents lists.
     # The invariant: merge_count <= commit_count and the same run with
     # --include-merges reports the same merge_count value.
-    runner = CliRunner()
+    runner = _runner()
     result_no_merges = runner.invoke(
         main,
         [
@@ -276,7 +280,7 @@ def test_merge_count_consistent_with_filtered_commits(tmp_path):
 
 
 def test_html_overrides_tty_writes_note(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open"):
         result = runner.invoke(
@@ -300,7 +304,7 @@ def test_html_overrides_tty_writes_note(tmp_path):
 
 
 def test_invalid_window_exits_nonzero():
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(
         main,
         [
@@ -316,11 +320,11 @@ def test_invalid_window_exits_nonzero():
         ],
     )
     assert result.exit_code != 0
-    assert "cannot be later" in result.output.lower()
+    assert "cannot be later" in result.stderr.lower()
 
 
 def test_invalid_theme_exits_with_valid_names_on_stderr(tmp_path):
-    runner = CliRunner()
+    runner = _runner()
     target = tmp_path / "nope.html"
     result = runner.invoke(
         main,

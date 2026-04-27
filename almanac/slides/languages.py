@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from almanac.renderer import ansi
 from almanac.slides._util import (
     assemble,
     center,
@@ -51,7 +50,7 @@ class _Languages:
             ext_str = ext.ljust(10)
             lines_str = f"{lang.get('lines', 0):>8} lines"
             share_str = f"{share * 100:>5.1f}%"
-            marker = ansi.truecolor(*ansi.PALETTE[color]) + "█" + ansi.reset()
+            marker = paint("█", color)
             lines[start + i] = (
                 f"  {marker} {paint(ext_str, 'ink')} {lines_str}  {paint(share_str, 'plum')}"
             )

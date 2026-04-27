@@ -1,4 +1,5 @@
 import hashlib
+import importlib
 import json
 import os
 import subprocess
@@ -23,7 +24,7 @@ Install almanac[png] to enable PNG export:
 
 def _ensure_playwright_for_png() -> None:
     try:
-        import playwright.sync_api  # noqa: F401
+        importlib.import_module("playwright.sync_api")
     except ImportError:
         click.echo(_PNG_INSTALL_HINT, err=True)
         raise SystemExit(1)
@@ -34,6 +35,81 @@ def _default_png_path(kwargs: dict) -> Path:
     if out:
         return Path(out)
     return Path.cwd() / "summary-card.png"
+
+
+def _apply_gravatar_hashes(bundle: dict) -> None:
+    for author in bundle["authors"]:
+        primary_email = author["emails"][0] if author["emails"] else ""
+        if primary_email:
+            normalized = primary_email.strip().lower()
+            author["avatar_hash"] = hashlib.md5(normalized.encode("utf-8")).hexdigest()
+
+
+def _emit_outputs(
+    bundle: dict, kwargs: dict, theme: str, *, html_default: bool = False
+) -> None:
+    """Emit JSON/PNG/HTML/TTY output based on CLI flags."""
+    if kwargs["emit_json"]:
+        if kwargs.get("html") or kwargs.get("html_out") or kwargs.get("png"):
+            click.echo("note: --json wins, HTML/PNG not generated", err=True)
+        click.echo(json.dumps(bundle, ensure_ascii=False))
+        return
+
+    want_html = bool(kwargs.get("html"))
+    html_out = kwargs.get("html_out")
+    want_png = bool(kwargs.get("png"))
+
+    if want_png and not want_html and not html_out:
+        from almanac.renderer.png import render_png
+
+        png_path = _default_png_path(kwargs)
+        render_png(bundle, png_path)
+        click.echo(str(png_path), err=True)
+        return
+
+    if html_default or want_html or html_out:
+        if want_html and kwargs.get("tty"):
+            click.echo("note: --html wins, TTY not launched", err=True)
+        from almanac.renderer.html import write_html
+
+        target = Path(html_out) if html_out else None
+        out_path = write_html(bundle, target, theme=theme)
+        click.echo(str(out_path), err=True)
+        if html_out is None:
+            import webbrowser
+
+            webbrowser.open(out_path.as_uri())
+        if want_png:
+            from almanac.renderer.png import render_png
+
+            png_path = _default_png_path(kwargs)
+            render_png(bundle, png_path)
+            click.echo(str(png_path), err=True)
+        return
+
+    want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])
+    if not want_tty:
+        commit_count = bundle["commit_count"]
+        fix_count = bundle["verbs"].get("fix", 0)
+        fix_pct = round(fix_count / commit_count * 100) if commit_count else 0
+        top_file = (
+            bundle["files_by_churn"][0]["path"] if bundle["files_by_churn"] else "—"
+        )
+        click.echo(f"{commit_count} commits · {fix_pct}% fix · top file: {top_file}")
+        return
+
+    try:
+        from almanac.renderer.orchestrator import run_presentation
+        from almanac.slides import SLIDES
+
+        try:
+            size = os.get_terminal_size()
+            term_size = (size.columns, size.lines)
+        except OSError:
+            term_size = (80, 24)
+        run_presentation(SLIDES, bundle, term_size)
+    except KeyboardInterrupt:
+        pass
 
 
 @click.command()
@@ -171,77 +247,8 @@ def main(ctx, **kwargs):
 
         bundle = make_demo_bundle()
         if kwargs.get("gravatar"):
-            for author in bundle["authors"]:
-                primary_email = author["emails"][0] if author["emails"] else ""
-                if primary_email:
-                    normalized = primary_email.strip().lower()
-                    author["avatar_hash"] = hashlib.md5(
-                        normalized.encode("utf-8")
-                    ).hexdigest()
-
-        if kwargs["emit_json"]:
-            if kwargs.get("html") or kwargs.get("html_out") or kwargs.get("png"):
-                click.echo("note: --json wins, HTML/PNG not generated", err=True)
-            click.echo(json.dumps(bundle, ensure_ascii=False))
-            return
-
-        want_html = bool(kwargs.get("html"))
-        html_out = kwargs.get("html_out")
-        want_png = bool(kwargs.get("png"))
-
-        if want_png and not want_html and not html_out:
-            from almanac.renderer.png import render_png
-
-            png_path = _default_png_path(kwargs)
-            render_png(bundle, png_path)
-            click.echo(str(png_path), err=True)
-            return
-
-        if is_demo or want_html or html_out:
-            if want_html and kwargs.get("tty"):
-                click.echo("note: --html wins, TTY not launched", err=True)
-            from almanac.renderer.html import write_html
-
-            target = Path(html_out) if html_out else None
-            out_path = write_html(bundle, target, theme=theme)
-            click.echo(str(out_path), err=True)
-            if html_out is None:
-                import webbrowser
-
-                webbrowser.open(out_path.as_uri())
-            if want_png:
-                from almanac.renderer.png import render_png
-
-                png_path = _default_png_path(kwargs)
-                render_png(bundle, png_path)
-                click.echo(str(png_path), err=True)
-            return
-
-        want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])
-        if not want_tty:
-            commit_count = bundle["commit_count"]
-            fix_count = bundle["verbs"].get("fix", 0)
-            fix_pct = round(fix_count / commit_count * 100) if commit_count else 0
-            top_file = (
-                bundle["files_by_churn"][0]["path"] if bundle["files_by_churn"] else "—"
-            )
-            click.echo(
-                f"{commit_count} commits · {fix_pct}% fix · top file: {top_file}"
-            )
-            return
-
-        try:
-            from almanac.renderer.orchestrator import run_presentation
-            from almanac.slides import SLIDES
-
-            try:
-                size = os.get_terminal_size()
-                term_size = (size.columns, size.lines)
-            except OSError:
-                term_size = (80, 24)
-            run_presentation(SLIDES, bundle, term_size)
-        except KeyboardInterrupt:
-            pass
+            _apply_gravatar_hashes(bundle)
+        _emit_outputs(bundle, kwargs, theme, html_default=True)
         return
 
     repo = Path(kwargs["repo"]).resolve()
@@ -310,73 +317,6 @@ def main(ctx, **kwargs):
     )
 
     if kwargs.get("gravatar"):
-        for author in bundle["authors"]:
-            primary_email = author["emails"][0] if author["emails"] else ""
-            if primary_email:
-                normalized = primary_email.strip().lower()
-                author["avatar_hash"] = hashlib.md5(
-                    normalized.encode("utf-8")
-                ).hexdigest()
+        _apply_gravatar_hashes(bundle)
 
-    want_html = bool(kwargs.get("html"))
-    html_out = kwargs.get("html_out")
-
-    if kwargs["emit_json"]:
-        if want_html or html_out or kwargs.get("png"):
-            click.echo("note: --json wins, HTML/PNG not generated", err=True)
-        click.echo(json.dumps(bundle, ensure_ascii=False))
-        return
-
-    want_png = bool(kwargs.get("png"))
-
-    if want_png and not want_html and not html_out:
-        from almanac.renderer.png import render_png
-
-        png_path = _default_png_path(kwargs)
-        render_png(bundle, png_path)
-        click.echo(str(png_path), err=True)
-        return
-
-    if want_html or html_out:
-        if want_html and kwargs.get("tty"):
-            click.echo("note: --html wins, TTY not launched", err=True)
-        from almanac.renderer.html import write_html
-
-        target = Path(html_out) if html_out else None
-        out_path = write_html(bundle, target, theme=theme)
-        click.echo(str(out_path), err=True)
-        if html_out is None:
-            import webbrowser
-
-            webbrowser.open(out_path.as_uri())
-        if want_png:
-            from almanac.renderer.png import render_png
-
-            png_path = _default_png_path(kwargs)
-            render_png(bundle, png_path)
-            click.echo(str(png_path), err=True)
-        return
-
-    want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])
-    if not want_tty:
-        commit_count = bundle["commit_count"]
-        fix_count = bundle["verbs"].get("fix", 0)
-        fix_pct = round(fix_count / commit_count * 100) if commit_count else 0
-        top_file = (
-            bundle["files_by_churn"][0]["path"] if bundle["files_by_churn"] else "—"
-        )
-        click.echo(f"{commit_count} commits · {fix_pct}% fix · top file: {top_file}")
-        return
-
-    try:
-        from almanac.renderer.orchestrator import run_presentation
-        from almanac.slides import SLIDES
-
-        try:
-            size = os.get_terminal_size()
-            term_size = (size.columns, size.lines)
-        except OSError:
-            term_size = (80, 24)
-        run_presentation(SLIDES, bundle, term_size)
-    except KeyboardInterrupt:
-        pass
+    _emit_outputs(bundle, kwargs, theme)

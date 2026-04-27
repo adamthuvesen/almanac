@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from almanac.slides._util import assemble, center, emphasize, microcopy_line, paint, rule, subdued
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    microcopy_line,
+    paint,
+    rule,
+    subdued,
+)
 
 
 class _Cover:

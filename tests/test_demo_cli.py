@@ -10,6 +10,10 @@ from click.testing import CliRunner
 from almanac.cli import main
 
 
+def _runner() -> CliRunner:
+    return CliRunner(mix_stderr=False)
+
+
 def _extract_bundle(html: str) -> dict:
     m = re.search(
         r'<script id="almanac-bundle" type="application/json">(.*?)</script>',
@@ -22,7 +26,7 @@ def _extract_bundle(html: str) -> dict:
 
 def test_demo_html_out_classic_theme(tmp_path):
     target = tmp_path / "demo.html"
-    runner = CliRunner()
+    runner = _runner()
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
             main,
@@ -37,7 +41,7 @@ def test_demo_html_out_classic_theme(tmp_path):
 
 def test_demo_html_omits_gravatar_hashes_by_default(tmp_path):
     target = tmp_path / "demo.html"
-    runner = CliRunner()
+    runner = _runner()
     with patch("webbrowser.open"):
         result = runner.invoke(
             main,
@@ -52,7 +56,7 @@ def test_demo_html_omits_gravatar_hashes_by_default(tmp_path):
 
 def test_demo_gravatar_flag_emits_hashes(tmp_path):
     target = tmp_path / "demo.html"
-    runner = CliRunner()
+    runner = _runner()
     with patch("webbrowser.open"):
         result = runner.invoke(
             main,
@@ -69,7 +73,7 @@ def test_demo_gravatar_flag_emits_hashes(tmp_path):
 
 def test_demo_html_out_wrapped_theme(tmp_path):
     target = tmp_path / "demo.html"
-    runner = CliRunner()
+    runner = _runner()
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
             main,
@@ -83,7 +87,7 @@ def test_demo_html_out_wrapped_theme(tmp_path):
 
 
 def test_demo_conflicts_with_repo():
-    runner = CliRunner()
+    runner = _runner()
     result = runner.invoke(
         main,
         ["--demo", "--repo", "/tmp"],
