@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>almanac card</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1200px;
+      height: 630px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #F4EDE0;
+      color: #1C1612;
+      overflow: hidden;
+    }
+    .card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr auto auto;
+      width: 100%;
+      height: 100%;
+      padding: 2rem 2.5rem 1.75rem 2.5rem;
+      grid-template-areas:
+        "head-l head-r"
+        "mid  mid"
+        "heat  heat"
+        "foot  wr";
+      gap: 0.5rem 2rem;
+    }
+    .card--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      padding: 3rem;
+    }
+    .card--empty p {
+      font-size: 32px;
+      line-height: 1.4;
+      max-width: 42rem;
+      color: #4A2E3B;
+    }
+    .head-l {
+      grid-area: head-l;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.1;
+      word-break: break-word;
+      color: #A94F2E;
+    }
+    .head-r {
+      grid-area: head-r;
+      text-align: right;
+      font-size: 40px;
+      font-weight: 600;
+      color: #1C1612;
+    }
+    .mid {
+      grid-area: mid;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-content: center;
+      gap: 1.25rem 1.5rem;
+      min-height: 0;
+    }
+    .field {
+      background: rgba(28, 22, 18, 0.06);
+      border-radius: 8px;
+      padding: 1rem 1.1rem 1.1rem 1.1rem;
+    }
+    .field .label {
+      display: block;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #5B6A47;
+      margin-bottom: 0.35rem;
+    }
+    .field .value {
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+    .field .value.path {
+      font-size: 19px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 500;
+      word-break: break-all;
+    }
+    .heatmap {
+      grid-area: heat;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      height: 56px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(28, 22, 18, 0.12);
+    }
+    .heatmap .cell {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .wordmark {
+      grid-area: wr;
+      align-self: end;
+      justify-self: end;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      color: #5B6A47;
+    }
+  </style>
+</head>
+<body>
+  <div id="card-root" class="card"></div>
+  <div id="card-empty" class="card--empty" style="display: none" aria-hidden="true">
+    <p class="no-commits-msg"></p>
+  </div>
+  <script id="almanac-bundle" type="application/json">$BUNDLE_JSON</script>
+  <script>
+(function() {
+  const C = {
+    cream: "#F4EDE0", ink: "#1C1612", rust: "#A94F2E",
+    sage:  "#5B6A47", ochre: "#C9A24A", plum: "#4A2E3B"
+  };
+  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const hexToRgb = (hex) => {
+    const raw = hex.replace("#", "");
+    const n = parseInt(raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const mix = (a, b, t) => {
+    const ar = hexToRgb(a), br = hexToRgb(b);
+    const ch = ar.map((v, i) => Math.round(v + (br[i] - v) * t));
+    return "rgb(" + ch[0] + ", " + ch[1] + ", " + ch[2] + ")";
+  };
+  const rampColor = (t) => {
+    if (t <= 0) return C.cream;
+    if (t < 0.45) return mix(C.cream, C.sage, t / 0.45);
+    if (t < 0.75) return mix(C.sage, C.ochre, (t - 0.45) / 0.30);
+    return mix(C.ochre, C.rust, (t - 0.75) / 0.25);
+  };
+  const parseLocalDate = (s) => new Date(s + "T00:00:00");
+  const dayOfWeekMon0 = (d) => (d.getDay() + 6) % 7;
+  const startOfWeek = (d) => {
+    const out = new Date(d);
+    out.setDate(out.getDate() - dayOfWeekMon0(out));
+    out.setHours(0, 0, 0, 0);
+    return out;
+  };
+  const daysBetween = (a, b) => Math.round((b - a) / 86400000);
+
+  const el = document.getElementById("almanac-bundle");
+  let BUNDLE = {};
+  try {
+    BUNDLE = JSON.parse(el.textContent);
+  } catch (e) {
+    return;
+  }
+  const root = document.getElementById("card-root");
+  const empty = document.getElementById("card-empty");
+  if (!BUNDLE || BUNDLE.commit_count === 0) {
+    root.style.display = "none";
+    empty.style.display = "flex";
+    const msg = (empty.querySelector(".no-commits-msg"));
+    msg.textContent = "No commits in this window.";
+    empty.setAttribute("aria-hidden", "false");
+    return;
+  }
+  const repo = (BUNDLE.repo && BUNDLE.repo.name) ? BUNDLE.repo.name : "—";
+  const n = BUNDLE.commit_count;
+  const langs = BUNDLE.languages || [];
+  const topLang = langs[0] ? (langs[0].ext || "—") : "—";
+  const files = BUNDLE.files_by_churn || [];
+  const topFile = files[0] ? files[0].path : "—";
+  const byDow = BUNDLE.by_dow || [0, 0, 0, 0, 0, 0, 0];
+  let bestI = 0, bestC = 0;
+  for (let i = 0; i < 7; i++) {
+    if (byDow[i] > bestC) { bestC = byDow[i]; bestI = i; }
+  }
+  const busiestD = bestC > 0 ? DOW[bestI] : "—";
+
+  root.innerHTML = ""
+    + '<div class="head-l"></div>'
+    + '<div class="head-r"></div>'
+    + '<div class="mid">'
+    +   '<div class="field"><span class="label">Top language</span><span class="value" id="v-lang"></span></div>'
+    +   '<div class="field"><span class="label">Top churned file</span><span class="value path" id="v-file"></span></div>'
+    +   '<div class="field"><span class="label">Busiest day</span><span class="value" id="v-dow"></span></div>'
+    + '</div>'
+    + '<div class="heatmap" id="week-strip" role="img" aria-label="Commit activity by week"></div>'
+    + '<div class="wordmark">almanac</div>';
+  root.querySelector(".head-l").textContent = repo;
+  root.querySelector(".head-r").textContent = n + " commits";
+  document.getElementById("v-lang").textContent = topLang;
+  document.getElementById("v-file").textContent = topFile;
+  document.getElementById("v-dow").textContent = busiestD;
+
+  const data = (BUNDLE.commits_per_day || []).map((d) => {
+    return { date: parseLocalDate(d.date), count: d.count || 0 };
+  });
+  const strip = document.getElementById("week-strip");
+  strip.textContent = "";
+  const nCells = 52;
+  for (let i = 0; i < nCells; i++) {
+    const d = document.createElement("div");
+    d.className = "cell";
+    strip.appendChild(d);
+  }
+  if (data.length) {
+    const start = startOfWeek(data[0].date);
+    const last = data[data.length - 1].date;
+    const weekCount = Math.min(
+      nCells,
+      Math.max(1, Math.floor(daysBetween(start, last) / 7) + 1)
+    );
+    const weeks = new Array(weekCount).fill(0);
+    for (const row of data) {
+      const w = Math.floor(daysBetween(start, row.date) / 7);
+      if (w >= 0 && w < weekCount) weeks[w] += row.count;
+    }
+    const maxW = Math.max(1, ...weeks);
+    for (let w = 0; w < weekCount; w++) {
+      const t = weeks[w] / maxW;
+      strip.children[w].style.background = rampColor(t);
+      strip.children[w].style.opacity = weeks[w] ? "1" : "0.35";
+    }
+    for (let w = weekCount; w < nCells; w++) {
+      strip.children[w].style.background = rampColor(0);
+      strip.children[w].style.opacity = "0.35";
+    }
+  } else {
+    for (let w = 0; w < nCells; w++) {
+      strip.children[w].style.background = rampColor(0);
+      strip.children[w].style.opacity = "0.35";
+    }
+  }
+})();
+  </script>
+</body>
+</html>
