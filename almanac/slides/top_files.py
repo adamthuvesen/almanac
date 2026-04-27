@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from almanac.renderer.ansi import hbar
+from almanac.renderer.ansi import hbar
 from almanac.slides._util import (
     assemble,
     center,
     emphasize,
     microcopy_line,
     paint,
+    rule,
     sanitize_tty,
+    subdued,
 )
 
 
@@ -25,8 +28,10 @@ class _TopFiles:
         cap = microcopy_line(bundle, "top_files_caption", "olive")
         if cap and height >= 3:
             lines[2] = center(cap, width)
+        if height >= 4:
+            lines[3] = rule(width)
 
-        start = 3
+        start = 4
         available = max(0, height - start - 2)
         shown = files[:available]
         omitted = max(0, len(files) - len(shown))
@@ -34,9 +39,10 @@ class _TopFiles:
         if not shown:
             return assemble(lines, width, height)
 
+        rank_w = 4  # "  #1" — right-justified rank prefix
         path_w = min(40, max(12, width // 3))
         count_w = 6
-        bar_w = max(6, width - path_w - count_w - 4)
+        bar_w = max(6, width - rank_w - path_w - count_w - 5)
         max_edits = max(f["edits"] for f in shown) if shown else 0
 
         for i, f in enumerate(shown):
@@ -46,7 +52,11 @@ class _TopFiles:
             path = path.ljust(path_w)
             edits = f["edits"]
             bar = hbar(edits, max_edits, bar_w)
-            row = f"  {paint(path, 'ink')}  {paint(bar, 'sky')} {paint(str(edits).rjust(count_w), 'plum')}"
+            rank = subdued(f"#{i + 1}".rjust(rank_w))
+            row = (
+                f"{rank}  {paint(path, 'ink')}  "
+                f"{paint(bar, 'sky')} {paint(str(edits).rjust(count_w), 'plum')}"
+            )
             lines[start + i] = row
 
         if omitted:

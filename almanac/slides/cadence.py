@@ -10,9 +10,18 @@ from almanac.slides._util import (
     ljust,
     microcopy_line,
     paint,
+    rule,
+    subdued,
 )
 
 _DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _bar_color(value: int, max_val: int, on_color: str, off_color: str = "mist") -> str:
+    """Return the bar color based on relative intensity."""
+    if max_val <= 0 or value <= 0:
+        return off_color
+    return on_color if value / max_val >= 0.15 else off_color
 
 
 class _Cadence:
@@ -29,6 +38,8 @@ class _Cadence:
         cap = microcopy_line(bundle, "cadence_caption", "olive")
         if cap and height >= 3:
             lines[2] = center(cap, width)
+        if height >= 4:
+            lines[3] = rule(width)
         sub = microcopy_line(bundle, "comeback_caption", "plum") or microcopy_line(
             bundle, "quiet_caption", "plum"
         )
@@ -39,24 +50,28 @@ class _Cadence:
         dow_max = max(by_dow) if by_dow else 0
         hour_max = max(by_hour) if by_hour else 0
 
-        left_title = paint("Day of week", "olive")
-        right_title = paint("Hour of day", "olive")
-        if height >= 4:
-            lines[3] = ljust("  " + left_title, col_w) + "  " + right_title
+        left_title = subdued("Day of week")
+        right_title = subdued("Hour of day")
+        if height >= 5:
+            lines[4] = ljust("  " + left_title, col_w) + "  " + right_title
 
         left_rows = []
         for i, count in enumerate(by_dow):
             label = _DOW[i]
             bar = hbar(count, dow_max, bar_w)
-            left_rows.append(f"  {label}  {paint(bar, 'sky')} {count}")
+            color = _bar_color(count, dow_max, "sky")
+            left_rows.append(f"  {label}  {paint(bar, color)} {paint(str(count), color)}")
 
         right_rows = []
         for hour, count in enumerate(by_hour):
             label = f"{hour:02d}"
             bar = hbar(count, hour_max, bar_w)
-            right_rows.append(f"  {label}  {paint(bar, 'plum')} {count}")
+            color = _bar_color(count, hour_max, "plum")
+            right_rows.append(
+                f"  {label}  {paint(bar, color)} {paint(str(count), color)}"
+            )
 
-        start = 5
+        start = 6
         n_rows = min(len(right_rows), max(0, height - start - 1))
         for i in range(n_rows):
             left = left_rows[i] if i < len(left_rows) else ""

@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from almanac.slides._util import assemble, center, emphasize, microcopy_line, paint
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    microcopy_line,
+    paint,
+    rule,
+    subdued,
+)
 
 
 def _fmt(n: int) -> str:
@@ -17,7 +25,7 @@ def _fmt(n: int) -> str:
 
 def _cell(label: str, value: str, col_w: int) -> tuple[str, str]:
     return (
-        center(paint(label, "plum"), col_w),
+        center(subdued(label), col_w),
         center(emphasize(value, "sky"), col_w),
     )
 
@@ -43,25 +51,35 @@ class _Numbers:
         cap = microcopy_line(bundle, "numbers_caption", "olive")
         if cap and height >= 3:
             lines[2] = center(cap, width)
+        if height >= 4:
+            lines[3] = rule(width)
 
-        col_w = width // 3
-        # Keep the grid visually compact even on tall terminals.
-        row_h = min(6, max(3, (height - 4) // 2))
-        start_row = max(3, (height - (row_h * 2 + 2)) // 2)
+        # │ separators take 2 visible chars total (between 3 columns)
+        sep = paint("│", "mist")
+        col_w = (width - 2) // 3
+
+        row_h = min(6, max(3, (height - 5) // 2))
+        start_row = max(5, (height - (row_h * 2 + 2)) // 2)
 
         for row_idx in range(2):
             row_cells = metrics[row_idx * 3 : row_idx * 3 + 3]
-            label_parts = []
-            value_parts = []
+            label_parts: list[str] = []
+            value_parts: list[str] = []
             for label, value in row_cells:
                 lbl, val = _cell(label, value, col_w)
                 label_parts.append(lbl)
                 value_parts.append(val)
             r = start_row + row_idx * row_h
             if r < height:
-                lines[r] = "".join(label_parts)
+                lines[r] = sep.join(label_parts)
             if r + 1 < height:
-                lines[r + 1] = "".join(value_parts)
+                lines[r + 1] = sep.join(value_parts)
+
+        # Thin rule between the two stat rows
+        divider_row = start_row + row_h - 1
+        if 3 < divider_row < height:
+            lines[divider_row] = rule(width)
+
         return assemble(lines, width, height)
 
 

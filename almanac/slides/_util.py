@@ -50,6 +50,18 @@ def emphasize(text: str, color_name: str = "rust") -> str:
     return ansi.bold() + ansi.truecolor(*ansi.PALETTE[color_name]) + text + ansi.reset()
 
 
+def subdued(text: str, color_name: str = "mist") -> str:
+    """Dimmed, de-emphasized text — good for labels and secondary info."""
+    return ansi.dim() + ansi.truecolor(*ansi.PALETTE[color_name]) + text + ansi.reset()
+
+
+def rule(width: int, color: str = "mist") -> str:
+    """A thin centered horizontal rule for visual section breaks."""
+    inner = "─" * min(width - 4, 52)
+    line = ansi.dim() + ansi.truecolor(*ansi.PALETTE[color]) + inner + ansi.reset()
+    return center(line, width)
+
+
 def microcopy_line(bundle: dict, slot: str, color: str = "olive") -> str | None:
     """Return a sanitized, painted caption from ``bundle.microcopy[slot]``.
 
@@ -66,7 +78,7 @@ def microcopy_line(bundle: dict, slot: str, color: str = "olive") -> str | None:
 def assemble(lines: list[str], width: int, height: int) -> str:
     """Clip to height, join with \\n. Caller is responsible for widths."""
     out = [lines[i] if i < len(lines) else "" for i in range(height)]
-    return "\n".join(out)
+    return "\r\n".join(out)
 
 
 def stacked_bar(

@@ -46,7 +46,8 @@ def _read_key(stdin_fd: int) -> str:
 
 
 def _footer(idx: int, total: int, width: int) -> str:
-    label = f"{idx + 1} / {total}  ·  ← → to navigate  ·  q to quit"
+    dots = "  ".join("●" if i == idx else "○" for i in range(total))
+    label = f"  {dots}    ← → navigate  ·  q quit"
     pad = max(0, width - len(label))
     return " " * (pad // 2) + label
 
