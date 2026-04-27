@@ -1,4 +1,18 @@
-from almanac.ingest import _parse_log_stream, _parse_numstat_z
+import os
+import subprocess
+from datetime import datetime
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from almanac.ingest import (
+    GitLogError,
+    _parse_log_stream,
+    _parse_numstat_z,
+    _run_git_log,
+)
+from almanac.window import Window
 
 
 def test_numstat_z_normal_path():
@@ -101,3 +115,61 @@ def test_iter_commits_is_chronological_with_merges():
     merges = [c for c in commits_sorted if c.is_merge]
     assert len(merges) == 1
     assert merges[0].sha == "1111"
+
+
+def _git(repo: Path, *args: str, **kwargs):
+    return subprocess.run(
+        ["git", "-C", str(repo), *args],
+        check=True,
+        capture_output=True,
+        **kwargs,
+    )
+
+
+def _commit(repo: Path, subject: str, author_date: str) -> None:
+    path = repo / "file.txt"
+    path.write_text(path.read_text(encoding="utf-8") + subject + "\n", encoding="utf-8")
+    _git(repo, "add", "file.txt")
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_DATE": author_date,
+        "GIT_COMMITTER_DATE": author_date,
+    }
+    _git(repo, "commit", "-m", subject, env=env)
+
+
+def test_git_window_filter_uses_author_local_boundary(tmp_path):
+    repo = tmp_path / "repo"
+    _git(tmp_path, "init", str(repo))
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "file.txt").write_text("", encoding="utf-8")
+
+    _commit(repo, "fix: previous local year", "2024-12-31T23:30:00+1400")
+    _commit(repo, "feat: first local morning", "2025-01-01T00:30:00+1400")
+
+    commits = _run_git_log(
+        repo,
+        Window(
+            datetime(2025, 1, 1),
+            datetime(2025, 12, 31, 23, 59, 59, 999999),
+            "2025",
+        ),
+        include_merges=False,
+    )
+
+    assert [c.subject for c in commits] == ["feat: first local morning"]
+
+
+def test_git_log_failure_raises(monkeypatch):
+    def fake_run(*args, **kwargs):
+        return SimpleNamespace(returncode=128, stdout=b"", stderr=b"fatal: bad repo\n")
+
+    monkeypatch.setattr("almanac.ingest.subprocess.run", fake_run)
+
+    with pytest.raises(GitLogError, match="bad repo"):
+        _run_git_log(
+            Path("."),
+            Window(datetime(2025, 1, 1), datetime(2025, 1, 31), "2025-01"),
+            include_merges=False,
+        )

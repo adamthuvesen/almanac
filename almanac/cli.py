@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 
 from almanac import __version__
-from almanac.ingest import coalesce_identities, iter_commits
+from almanac.ingest import GitLogError, coalesce_identities, iter_commits
 from almanac.stats import compute_bundle
 from almanac.window import resolve_window
 
@@ -135,7 +135,11 @@ def main(**kwargs):
     }
 
     include_merges = kwargs["include_merges"]
-    commits = list(iter_commits(repo, window, include_merges=include_merges))
+    try:
+        commits = list(iter_commits(repo, window, include_merges=include_merges))
+    except GitLogError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
     author_filter = kwargs["author"]
     canonical: dict[str, str] | None = None
@@ -186,7 +190,7 @@ def main(**kwargs):
         if html_out is None:
             import webbrowser
 
-            webbrowser.open(f"file://{out_path}")
+            webbrowser.open(out_path.as_uri())
         return
 
     want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])

@@ -53,11 +53,11 @@ def resolve_window(
 
     if since is not None or until is not None:
         since_dt = (
-            _parse_boundary(since, end_of_day=False)
-            if since is not None
-            else None
+            _parse_boundary(since, end_of_day=False) if since is not None else None
         )
-        until_dt = _parse_boundary(until, end_of_day=True) if until is not None else None
+        until_dt = (
+            _parse_boundary(until, end_of_day=True) if until is not None else None
+        )
         if since_dt is None:
             since_dt = datetime(2000, 1, 1)
             if until_dt is not None and until_dt.tzinfo is not None:
@@ -66,6 +66,10 @@ def resolve_window(
             until_dt = now
             if since_dt.tzinfo is not None:
                 until_dt = until_dt.replace(tzinfo=since_dt.tzinfo)
+        if since_dt.tzinfo is None and until_dt.tzinfo is not None:
+            since_dt = since_dt.replace(tzinfo=until_dt.tzinfo)
+        if since_dt.tzinfo is not None and until_dt.tzinfo is None:
+            until_dt = until_dt.replace(tzinfo=since_dt.tzinfo)
         if since_dt > until_dt:
             raise click.UsageError("--since cannot be later than --until")
         label = f"{since_dt.date()}..{until_dt.date()}"

@@ -1,6 +1,7 @@
 import subprocess
 from collections import Counter
 from collections.abc import Iterator
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import NamedTuple
 
@@ -28,8 +29,28 @@ class Commit(NamedTuple):
         return len(self.parents) > 1
 
 
+class GitLogError(RuntimeError):
+    """Raised when git log cannot produce the commit stream."""
+
+
+_GIT_WINDOW_PAD = timedelta(days=2)
+
+
 def _decode(b: bytes) -> str:
     return b.decode("utf-8", errors="replace")
+
+
+def _author_local(ts: str) -> datetime:
+    return datetime.fromisoformat(ts).replace(tzinfo=None)
+
+
+def _in_window(commit: Commit, window: Window) -> bool:
+    dt = datetime.fromisoformat(commit.ts)
+    if window.since.tzinfo is None:
+        candidate = _author_local(commit.ts)
+    else:
+        candidate = dt
+    return window.since <= candidate <= window.until
 
 
 def _parse_numstat_z(stream: bytes) -> list[FileChange]:
@@ -125,6 +146,11 @@ def _parse_log_stream(raw: bytes) -> list[Commit]:
 
 
 def _run_git_log(repo: Path, window: Window, include_merges: bool) -> list[Commit]:
+    # Git date limiting happens before we can inspect `%aI`, and it treats
+    # bare timestamps as absolute dates in Git's own frame. Widen the
+    # subprocess range, then apply the exact author-local predicate below.
+    git_since = window.since - _GIT_WINDOW_PAD
+    git_until = window.until + _GIT_WINDOW_PAD
     cmd = [
         "git",
         "-C",
@@ -134,13 +160,17 @@ def _run_git_log(repo: Path, window: Window, include_merges: bool) -> list[Commi
         "--numstat",
         "-z",
         "--pretty=format:\x1e%H\x1f%aI\x1f%aN\x1f%aE\x1f%P\x1f%s",
-        f"--since={window.since.isoformat()}",
-        f"--until={window.until.isoformat()}",
+        f"--since={git_since.isoformat()}",
+        f"--until={git_until.isoformat()}",
     ]
     if not include_merges:
         cmd.append("--no-merges")
     result = subprocess.run(cmd, capture_output=True, check=False)
-    return _parse_log_stream(result.stdout)
+    if result.returncode != 0:
+        stderr = _decode(result.stderr).strip()
+        detail = f": {stderr}" if stderr else ""
+        raise GitLogError(f"git log failed{detail}")
+    return [c for c in _parse_log_stream(result.stdout) if _in_window(c, window)]
 
 
 def iter_commits(

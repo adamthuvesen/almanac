@@ -43,3 +43,4 @@ def test_compute_bundle_merges_same_author_across_emails():
     assert author["commits"] == 2
     assert author["lines_added"] == 7
     assert author["lines_removed"] == 3
+    assert bundle["languages"] == [{"ext": ".py", "lines": 10, "share": 1.0}]
