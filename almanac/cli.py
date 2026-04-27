@@ -6,11 +6,36 @@ import sys
 from pathlib import Path
 
 import click
+from click.core import ParameterSource
 
 from almanac import __version__
 from almanac.ingest import GitLogError, coalesce_identities, iter_commits
+from almanac.renderer.html import resolve_theme
 from almanac.stats import compute_bundle
 from almanac.window import resolve_window
+
+_PNG_INSTALL_HINT = """\
+Install almanac[png] to enable PNG export:
+  pip install 'almanac[png]'
+  playwright install chromium
+"""
+
+
+def _ensure_playwright_for_png() -> None:
+    try:
+        import importlib
+
+        importlib.import_module("playwright.sync_api")
+    except ImportError:
+        click.echo(_PNG_INSTALL_HINT, err=True)
+        raise SystemExit(1)
+
+
+def _default_png_path(kwargs: dict) -> Path:
+    out = kwargs.get("png_out")
+    if out:
+        return Path(out)
+    return Path.cwd() / "summary-card.png"
 
 
 @click.command()
@@ -43,9 +68,34 @@ from almanac.window import resolve_window
     default=None,
     help="Write the HTML presentation to PATH (skips browser auto-open).",
 )
-@click.option("--theme", default=None, help="[not yet implemented]")
-@click.option("--png", is_flag=True, default=False, help="[not yet implemented]")
-@click.option("--demo", is_flag=True, default=False, help="[not yet implemented]")
+@click.option(
+    "--theme",
+    "theme",
+    type=str,
+    default="classic",
+    show_default=True,
+    help="HTML report color theme (HTML output only).",
+)
+@click.option(
+    "--png",
+    is_flag=True,
+    default=False,
+    help="Render a 1200×630 PNG share card (requires: pip install 'almanac[png]').",
+)
+@click.option(
+    "--png-out",
+    "png_out",
+    type=click.Path(),
+    default=None,
+    metavar="PATH",
+    help="Write the PNG to PATH (default: ./summary-card.png in the current directory).",
+)
+@click.option(
+    "--demo",
+    is_flag=True,
+    default=False,
+    help="Use a built-in synthetic repo report (no git or working tree required).",
+)
 @click.option("--voice", is_flag=True, default=False, help="[not yet implemented]")
 @click.option("--soundtrack", is_flag=True, default=False, help="[not yet implemented]")
 @click.option("--slides", is_flag=True, default=False, help="[not yet implemented]")
@@ -70,12 +120,31 @@ from almanac.window import resolve_window
         "pip install 'almanac[ml]'."
     ),
 )
-def main(**kwargs):
+@click.pass_context
+def main(ctx, **kwargs):
     """Almanac — Spotify Wrapped for your codebase."""
+    try:
+        theme = resolve_theme(kwargs["theme"])
+    except ValueError as e:
+        click.echo(f"Error: {e}.", err=True)
+        sys.exit(1)
+
+    is_demo = bool(kwargs.get("demo"))
+    if is_demo:
+        conflicting: list[str] = []
+        for opt in ("repo", "since", "until", "year", "author"):
+            if ctx.get_parameter_source(opt) == ParameterSource.COMMANDLINE:
+                conflicting.append(f"--{opt.replace('_', '-')}")
+        if conflicting:
+            flags = ", ".join(conflicting)
+            click.echo(
+                f"Error: --demo cannot be combined with {flags} (use --demo alone for a "
+                "synthetic report).",
+                err=True,
+            )
+            sys.exit(1)
+
     for flag in [
-        "theme",
-        "png",
-        "demo",
         "voice",
         "soundtrack",
         "slides",
@@ -85,7 +154,7 @@ def main(**kwargs):
             sys.exit(1)
 
     classifier_strategy = kwargs["classifier"]
-    if classifier_strategy == "zeroshot":
+    if not is_demo and classifier_strategy == "zeroshot":
         from almanac.classifier import has_transformers
 
         if not has_transformers():
@@ -95,6 +164,87 @@ def main(**kwargs):
                 err=True,
             )
             sys.exit(1)
+
+    if kwargs.get("png") and not kwargs["emit_json"]:
+        _ensure_playwright_for_png()
+
+    if is_demo:
+        from almanac.demo import make_demo_bundle
+
+        bundle = make_demo_bundle()
+        if kwargs.get("gravatar"):
+            for author in bundle["authors"]:
+                primary_email = author["emails"][0] if author["emails"] else ""
+                if primary_email:
+                    normalized = primary_email.strip().lower()
+                    author["avatar_hash"] = hashlib.md5(
+                        normalized.encode("utf-8")
+                    ).hexdigest()
+
+        if kwargs["emit_json"]:
+            if kwargs.get("html") or kwargs.get("html_out") or kwargs.get("png"):
+                click.echo("note: --json wins, HTML/PNG not generated", err=True)
+            click.echo(json.dumps(bundle, ensure_ascii=False))
+            return
+
+        want_html = bool(kwargs.get("html"))
+        html_out = kwargs.get("html_out")
+        want_png = bool(kwargs.get("png"))
+
+        if want_png and not want_html and not html_out:
+            from almanac.renderer.png import render_png
+
+            png_path = _default_png_path(kwargs)
+            render_png(bundle, png_path)
+            click.echo(str(png_path), err=True)
+            return
+
+        if is_demo or want_html or html_out:
+            if want_html and kwargs.get("tty"):
+                click.echo("note: --html wins, TTY not launched", err=True)
+            from almanac.renderer.html import write_html
+
+            target = Path(html_out) if html_out else None
+            out_path = write_html(bundle, target, theme=theme)
+            click.echo(str(out_path), err=True)
+            if html_out is None:
+                import webbrowser
+
+                webbrowser.open(out_path.as_uri())
+            if want_png:
+                from almanac.renderer.png import render_png
+
+                png_path = _default_png_path(kwargs)
+                render_png(bundle, png_path)
+                click.echo(str(png_path), err=True)
+            return
+
+        want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])
+        if not want_tty:
+            commit_count = bundle["commit_count"]
+            fix_count = bundle["verbs"].get("fix", 0)
+            fix_pct = round(fix_count / commit_count * 100) if commit_count else 0
+            top_file = (
+                bundle["files_by_churn"][0]["path"] if bundle["files_by_churn"] else "—"
+            )
+            click.echo(
+                f"{commit_count} commits · {fix_pct}% fix · top file: {top_file}"
+            )
+            return
+
+        try:
+            from almanac.renderer.orchestrator import run_presentation
+            from almanac.slides import SLIDES
+
+            try:
+                size = os.get_terminal_size()
+                term_size = (size.columns, size.lines)
+            except OSError:
+                term_size = (80, 24)
+            run_presentation(SLIDES, bundle, term_size)
+        except KeyboardInterrupt:
+            pass
+        return
 
     repo = Path(kwargs["repo"]).resolve()
 
@@ -174,9 +324,19 @@ def main(**kwargs):
     html_out = kwargs.get("html_out")
 
     if kwargs["emit_json"]:
-        if want_html or html_out:
-            click.echo("note: --json wins, HTML not generated", err=True)
+        if want_html or html_out or kwargs.get("png"):
+            click.echo("note: --json wins, HTML/PNG not generated", err=True)
         click.echo(json.dumps(bundle, ensure_ascii=False))
+        return
+
+    want_png = bool(kwargs.get("png"))
+
+    if want_png and not want_html and not html_out:
+        from almanac.renderer.png import render_png
+
+        png_path = _default_png_path(kwargs)
+        render_png(bundle, png_path)
+        click.echo(str(png_path), err=True)
         return
 
     if want_html or html_out:
@@ -185,12 +345,18 @@ def main(**kwargs):
         from almanac.renderer.html import write_html
 
         target = Path(html_out) if html_out else None
-        out_path = write_html(bundle, target)
+        out_path = write_html(bundle, target, theme=theme)
         click.echo(str(out_path), err=True)
         if html_out is None:
             import webbrowser
 
             webbrowser.open(out_path.as_uri())
+        if want_png:
+            from almanac.renderer.png import render_png
+
+            png_path = _default_png_path(kwargs)
+            render_png(bundle, png_path)
+            click.echo(str(png_path), err=True)
         return
 
     want_tty = kwargs["tty"] or (sys.stdout.isatty() and not kwargs["no_tty"])

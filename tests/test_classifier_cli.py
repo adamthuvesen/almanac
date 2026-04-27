@@ -13,7 +13,7 @@ REPO = Path(__file__).parent.parent
 
 
 def test_invalid_classifier_exits_nonzero():
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         main,
         ["--classifier", "wizard", "--repo", str(REPO), "--year", "2025"],
@@ -33,7 +33,7 @@ def test_zeroshot_without_ml_exits_before_git(tmp_path, monkeypatch):
         return real_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ["--classifier", "zeroshot", "--year", "2025"])
     assert result.exit_code != 0
     assert "almanac[ml]" in (result.stderr or "")

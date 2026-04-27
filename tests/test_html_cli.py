@@ -12,7 +12,7 @@ REPO = Path(__file__).parent.parent
 
 
 def test_html_out_writes_file_and_skips_browser(tmp_path):
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -77,7 +77,7 @@ def test_html_out_combined_with_html_still_skips_browser(tmp_path):
 
 
 def test_json_wins_over_html(tmp_path):
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open") as mock_open:
         result = runner.invoke(
@@ -276,7 +276,7 @@ def test_merge_count_consistent_with_filtered_commits(tmp_path):
 
 
 def test_html_overrides_tty_writes_note(tmp_path):
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     target = tmp_path / "wrap.html"
     with patch("webbrowser.open"):
         result = runner.invoke(
@@ -317,3 +317,28 @@ def test_invalid_window_exits_nonzero():
     )
     assert result.exit_code != 0
     assert "cannot be later" in result.output.lower()
+
+
+def test_invalid_theme_exits_with_valid_names_on_stderr(tmp_path):
+    runner = CliRunner(mix_stderr=False)
+    target = tmp_path / "nope.html"
+    result = runner.invoke(
+        main,
+        [
+            "--html-out",
+            str(target),
+            "--theme",
+            "neon",
+            "--repo",
+            str(REPO),
+            "--year",
+            "2025",
+            "--classifier",
+            "rules",
+        ],
+    )
+    assert result.exit_code == 1
+    err = (result.output or "") + (result.stderr or "")
+    for name in ("classic", "terminal", "midnight", "paper", "wrapped"):
+        assert name in err, f"expected {name!r} in error message: {err!r}"
+    assert not target.exists()
