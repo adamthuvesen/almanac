@@ -68,7 +68,18 @@ def _minimal_bundle() -> dict:
 def test_render_html_returns_full_document():
     out = render_html(_minimal_bundle())
     assert out.startswith("<!doctype html>")
+    assert 'data-theme="classic"' in out
     assert "</html>" in out
+
+
+def test_render_html_includes_data_theme_when_midnight():
+    out = render_html(_minimal_bundle(), theme="midnight")
+    assert 'data-theme="midnight"' in out
+
+
+def test_render_html_default_theme_is_classic():
+    out = render_html(_minimal_bundle())
+    assert 'data-theme="classic"' in out
 
 
 def test_render_html_includes_palette_custom_properties():
@@ -293,3 +304,55 @@ def test_render_html_is_deterministic_for_same_bundle():
     a = render_html(bundle)
     b = render_html(bundle)
     assert a == b
+
+
+def test_heatmap_cells_have_data_date_count() -> None:
+    out = render_html(_minimal_bundle())
+    assert "data-date" in out
+    assert "data-count" in out
+
+
+def test_top_file_bars_have_data_subjects() -> None:
+    out = render_html(_minimal_bundle())
+    assert "data-subjects" in out
+    assert "JSON.stringify" in out
+
+
+def test_biggest_commit_has_data_sha_date_subject() -> None:
+    out = render_html(_minimal_bundle())
+    assert "data-sha" in out
+    assert 'data-date="' in out or "data-date" in out
+    assert "data-subject" in out
+    assert "stat-receipt" in out or "data-sha" in out
+
+
+def test_subjects_with_html_metacharacters_are_safe() -> None:
+    bundle = _minimal_bundle()
+    bundle["files_by_churn"] = [
+        {
+            "path": "evil.js",
+            "edits": 1,
+            "lines": 1,
+            "subjects": [
+                "bad</script><img src=x onerror=alert(1)",
+                "a&b",
+                "x<y>z",
+            ],
+        }
+    ]
+    out = render_html(bundle)
+    assert "</script><img" not in out
+    assert "<\\/script>" in out or "<\\/script><img" in out
+
+
+def test_receipt_js_handlers_present() -> None:
+    out = render_html(_minimal_bundle())
+    for marker in (
+        "heatmap-tooltip",
+        "receipts-panel",
+        "almanacBindHeatmapReceiptTooltip",
+        "almanacSetupInspectableReceipts",
+        "almanac-biggest-receipt-popover",
+        "almanacCloseAllReceiptOverlays",
+    ):
+        assert marker in out, f"missing {marker}"

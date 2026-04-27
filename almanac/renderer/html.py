@@ -26,11 +26,38 @@ def _safe_json(bundle: dict) -> str:
     )
 
 
-def render_html(bundle: dict) -> str:
+THEME_CHOICES: tuple[str, ...] = (
+    "classic",
+    "terminal",
+    "midnight",
+    "paper",
+    "wrapped",
+)
+VALID_THEMES: frozenset[str] = frozenset(THEME_CHOICES)
+
+
+def resolve_theme(name: str) -> str:
+    key = (name or "").strip().lower()
+    for t in THEME_CHOICES:
+        if t == key:
+            return t
+    names = ", ".join(THEME_CHOICES)
+    raise ValueError(f"theme must be one of: {names}")
+
+
+def _theme_attr(theme: str) -> str:
+    if theme not in VALID_THEMES:
+        names = ", ".join(THEME_CHOICES)
+        raise ValueError(f"theme must be one of: {names}")
+    return f' data-theme="{theme}"'
+
+
+def render_html(bundle: dict, theme: str = "classic") -> str:
     return _TEMPLATE.safe_substitute(
         ALMANAC_CSS=_CSS,
         ALMANAC_JS=_JS,
         BUNDLE_JSON=_safe_json(bundle),
+        THEME_ATTR=_theme_attr(theme),
     )
 
 
@@ -38,11 +65,11 @@ def _safe_slug(s: str) -> str:
     return "".join(c if c.isalnum() or c in "-_" else "-" for c in s)
 
 
-def write_html(bundle: dict, path: Path | None = None) -> Path:
+def write_html(bundle: dict, path: Path | None = None, theme: str = "classic") -> Path:
     if path is not None:
         out_path = Path(path).resolve()
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(render_html(bundle), encoding="utf-8")
+        out_path.write_text(render_html(bundle, theme=theme), encoding="utf-8")
         return out_path
 
     label = bundle.get("window", {}).get("label", "window")
@@ -57,5 +84,5 @@ def write_html(bundle: dict, path: Path | None = None) -> Path:
         suffix=".html",
         delete=False,
     ) as f:
-        f.write(render_html(bundle))
+        f.write(render_html(bundle, theme=theme))
         return Path(f.name)

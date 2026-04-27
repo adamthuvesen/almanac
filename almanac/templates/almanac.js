@@ -129,17 +129,22 @@
     ["Longest gap",     BUNDLE.longest_gap_days ?? 0],
     ["Biggest commit",  BUNDLE.biggest_commit?.delta ?? 0],
   ];
+  const bc = BUNDLE.biggest_commit;
   slide("numbers", `
     <div class="eyebrow ui">Year in Numbers</div>
     <h2 class="section display">By the numbers.</h2>
     ${caption("numbers_caption")}
     <div class="grid6">
-      ${stats.map(([label, value]) => `
-        <div class="stat">
+      ${stats.map(([label, value]) => {
+    const isBig = label === "Biggest commit" && bc;
+    const attrs = isBig
+      ? ` class="stat stat-receipt" data-sha="${escapeHtml(bc.sha || "")}" data-date="${escapeHtml(bc.ts || "")}" data-subject="${escapeHtml(bc.subject || "")}"`
+      : ` class="stat"`;
+    return `<div${attrs}>
           <div class="figure" data-target="${value}">0</div>
           <div class="label">${escapeHtml(label)}</div>
-        </div>
-      `).join("")}
+        </div>`;
+  }).join("")}
     </div>
   `, THEMES.numbers);
 
@@ -183,7 +188,7 @@
         ${filesRaw.map((f) => `
           <div class="row has-bar">
             <div class="path" title="${escapeHtml(f.path)}">${escapeHtml(f.path)}</div>
-            <div class="bar-track"><div class="bar" data-pct="${(f.edits / maxEdits) * 100}"></div></div>
+            <div class="bar-track"><div class="bar" data-pct="${(f.edits / maxEdits) * 100}" data-subjects="${escapeHtml(JSON.stringify(f.subjects ?? []))}"></div></div>
             <div class="edits">${fmt.format(f.edits)}</div>
           </div>
         `).join("")}
@@ -353,13 +358,159 @@
   };
   const daysBetween = (a, b) => Math.round((b - a) / 86400000);
 
+  const almanacReceiptDtf = new Intl.DateTimeFormat("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+
+  let almanacOpenReceiptRow = null;
+  let almanacBiggestReceiptPopover = null;
+
+  function almanacCloseTopFileReceiptsPanel() {
+    if (!almanacOpenReceiptRow) return;
+    almanacOpenReceiptRow.querySelector(".receipts-panel")?.remove();
+    almanacOpenReceiptRow = null;
+  }
+
+  function almanacCloseBiggestReceiptPopover() {
+    almanacBiggestReceiptPopover?.remove();
+    almanacBiggestReceiptPopover = null;
+  }
+
+  function almanacCloseAllReceiptOverlays() {
+    almanacCloseTopFileReceiptsPanel();
+    almanacCloseBiggestReceiptPopover();
+  }
+
+  /**
+   * Binds one shared heatmap cell tooltip (#heatmap-tooltip). Invoked
+   * after each heatmap render (incl. resize). Marker: almanac-heatmap-receipt
+   */
+  function almanacBindHeatmapReceiptTooltip(svg) {
+    const tip = document.getElementById("heatmap-tooltip");
+    if (!tip || !svg) return;
+    svg.querySelectorAll("rect.hm-cell[data-date]").forEach((rect) => {
+      const show = (e) => {
+        const ds = rect.getAttribute("data-date");
+        if (!ds) return;
+        const n = parseInt(rect.getAttribute("data-count") || "0", 10);
+        const d = parseLocalDate(ds);
+        const when = almanacReceiptDtf.format(d);
+        const c = Number.isNaN(n) ? 0 : n;
+        const label = c === 1 ? "1 commit" : `${c} commits`;
+        tip.textContent = `${when} · ${label}`;
+        tip.style.display = "block";
+        requestAnimationFrame(() => almanacPositionReceiptTooltip(tip, e));
+      };
+      const move = (e) => almanacPositionReceiptTooltip(tip, e);
+      const hide = () => { tip.style.display = "none"; };
+      rect.addEventListener("mouseenter", show);
+      rect.addEventListener("mousemove", move);
+      rect.addEventListener("mouseleave", hide);
+    });
+  }
+
+  function almanacPositionReceiptTooltip(el, e) {
+    if (!e || e.clientX == null) return;
+    const pad = 12;
+    el.style.position = "fixed";
+    const w = el.offsetWidth || 180;
+    const h = el.offsetHeight || 24;
+    const x = e.clientX + pad;
+    const y = e.clientY + pad;
+    const maxX = window.innerWidth - w - 8;
+    const maxY = window.innerHeight - h - 8;
+    el.style.left = `${Math.max(8, Math.min(x, maxX))}px`;
+    el.style.top = `${Math.max(8, Math.min(y, maxY))}px`;
+  }
+
+  /**
+   * One-time: top-file subjects panel, biggest-commit popover, Escape, outside-click.
+   * Markers: receipts-panel, almanac-biggest-receipt-popover
+   */
+  function almanacSetupInspectableReceipts() {
+    if (window.__almanacReceiptsWired) return;
+    window.__almanacReceiptsWired = true;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") almanacCloseAllReceiptOverlays();
+    });
+
+    const top = document.getElementById("top-files");
+    if (top) {
+      top.addEventListener("click", (e) => {
+        const bar = e.target instanceof Element ? e.target.closest(".bar[data-subjects]") : null;
+        if (!bar) return;
+        e.stopPropagation();
+        almanacCloseBiggestReceiptPopover();
+        const row = bar.closest?.(".row.has-bar");
+        if (!row) return;
+        if (almanacOpenReceiptRow === row) {
+          almanacCloseTopFileReceiptsPanel();
+          return;
+        }
+        almanacCloseTopFileReceiptsPanel();
+        almanacOpenReceiptRow = row;
+        let subjects = [];
+        try {
+          const raw = bar.getAttribute("data-subjects");
+          subjects = raw ? JSON.parse(raw) : [];
+        } catch { subjects = []; }
+        if (!Array.isArray(subjects)) subjects = [];
+        const li = (subjects.length
+          ? subjects.map((s) => `<li>${escapeHtml(s)}</li>`).join("")
+          : '<li class="receipts-empty">No commit subjects recorded</li>');
+        const panel = make("ul", { class: "receipts-panel" });
+        panel.innerHTML = li;
+        row.appendChild(panel);
+        requestAnimationFrame(() => panel.classList.add("receipts-panel-open"));
+      });
+    }
+
+    const numBig = document.querySelector("#numbers .stat[data-sha]");
+    if (numBig) {
+      numBig.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (almanacBiggestReceiptPopover) {
+          almanacCloseBiggestReceiptPopover();
+          return;
+        }
+        almanacCloseTopFileReceiptsPanel();
+        const sha = (numBig.getAttribute("data-sha") || "").slice(0, 7);
+        const iso = numBig.getAttribute("data-date") || "";
+        const subj = numBig.getAttribute("data-subject") || "";
+        const pop = make("div", { class: "almanac-biggest-receipt-popover" });
+        pop.innerHTML = `
+          <div class="receipt-pop-sha mono">${escapeHtml(sha)}</div>
+          <div class="receipt-pop-when">${escapeHtml(fmtDate(iso))}</div>
+          <div class="receipt-pop-subj">${escapeHtml(subj)}</div>
+        `;
+        const r = numBig.getBoundingClientRect();
+        pop.style.left = `${r.left}px`;
+        pop.style.top = `${r.bottom + 6}px`;
+        document.body.appendChild(pop);
+        almanacBiggestReceiptPopover = pop;
+      });
+      document.addEventListener("click", (e) => {
+        if (!almanacBiggestReceiptPopover) return;
+        if (e.target === numBig || numBig.contains(e.target)) return;
+        if (almanacBiggestReceiptPopover.contains(e.target)) return;
+        almanacCloseBiggestReceiptPopover();
+      });
+    }
+  }
+
   function renderHeatmap() {
     const target = document.getElementById("heatmap-target");
     if (!target) return;
     clearNode(target);
     const data = (BUNDLE.commits_per_day || []).map((d) => {
       const dt = parseLocalDate(d.date);
-      return { date: dt, dow: dayOfWeekMon0(dt), count: d.count || 0 };
+      return {
+        date: dt,
+        dateStr: d.date,
+        dow: dayOfWeekMon0(dt),
+        count: d.count || 0,
+      };
     });
     if (!data.length) return;
     const start = startOfWeek(data[0].date);
@@ -393,6 +544,9 @@
         rx: 2,
         fill: rampColor(ratio),
         opacity: d.count ? "1" : "0.35",
+        "data-date": d.dateStr,
+        "data-count": String(d.count),
+        class: "hm-cell",
       });
       const title = svgEl("title");
       title.textContent = `${d.date.toISOString().slice(0, 10)}: ${d.count} commits`;
@@ -400,6 +554,7 @@
       svg.append(rect);
     });
     target.append(svg);
+    almanacBindHeatmapReceiptTooltip(svg);
   }
 
   function renderBar(targetId, data, labels, fill = C.rust, labelColor = C.ink) {
@@ -496,6 +651,7 @@
     animateCounters();
     fillBars(true);
     renderCharts();
+    almanacSetupInspectableReceipts();
   }
 
   if (document.readyState === "loading") {
