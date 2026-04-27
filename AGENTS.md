@@ -12,13 +12,15 @@ Almanac — "Spotify Wrapped for your codebase." A Python 3.11+ CLI that reads `
 # Setup (uv)
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"          # base + dev
-uv pip install -e '.[ml]'           # optional: pulls torch/transformers for zero-shot
+uv pip install -e '.[ml]'           # optional: torch/transformers for zero-shot
+uv pip install -e '.[png]'          # optional: playwright for --png (then: playwright install chromium)
 
 # Run the CLI (entry point: almanac.cli:main)
 almanac                              # current repo, last 12 months, TTY if interactive
 almanac --json                       # full stats bundle on stdout
 almanac --html                       # render + open HTML report
 almanac --html-out report.html       # render HTML to path, no browser
+almanac --png                        # 1200×630 share card → ./summary-card.png (needs almanac[png])
 almanac --classifier {auto,rules,zeroshot}
 
 # Tests (pytest configured via pyproject)
@@ -70,6 +72,10 @@ cli.py → window.resolve_window → ingest.iter_commits → stats.compute_bundl
 
 This repo uses OpenSpec (`openspec/`) for structured change tracking. Prefer the `/opsx:*` skills for non-trivial work: `/opsx:propose` → `/opsx:apply` → `/opsx:verify` → `/opsx:archive`. Archived proposals under `openspec/changes/archive/` are the best reference for how proposals are scoped in this project (short, with Non-goals + Success criteria sections, per `openspec/config.yaml`).
 
-## Reserved-but-stub flags
+## Reserved/stub flags
 
-`--theme`, `--png`, `--demo`, `--voice`, `--soundtrack`, `--slides` are registered in the CLI but print `not yet implemented` and exit 1. Keep them reserved — don't silently re-purpose.
+`--demo` is supported (synthetic bundle, no git). `--png` requires the optional `almanac[png]` extra and a one-time `playwright install chromium` for share-card export.
+
+These are still registered but not implemented: `--voice`, `--soundtrack`, `--slides` (they print `not yet implemented` and exit 1). Do not re-purpose them quietly.
+
+`--theme` applies to HTML output (`classic`, `terminal`, `midnight`, `paper`, `wrapped`).
