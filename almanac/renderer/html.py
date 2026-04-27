@@ -3,8 +3,15 @@ import tempfile
 from pathlib import Path
 from string import Template
 
-_TEMPLATE_PATH = Path(__file__).parent.parent / "templates" / "almanac.html"
+_TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
+_TEMPLATE_PATH = _TEMPLATE_DIR / "almanac.html"
+_CSS_PATH = _TEMPLATE_DIR / "almanac.css"
+_JS_PATH = _TEMPLATE_DIR / "almanac.js"
 _TEMPLATE = Template(_TEMPLATE_PATH.read_text(encoding="utf-8"))
+_CSS = _CSS_PATH.read_text(encoding="utf-8")
+_JS = _JS_PATH.read_text(encoding="utf-8")
+_LINE_SEPARATOR = "\u2028"
+_PARAGRAPH_SEPARATOR = "\u2029"
 
 
 def _safe_json(bundle: dict) -> str:
@@ -14,13 +21,17 @@ def _safe_json(bundle: dict) -> str:
     raw = json.dumps(bundle, ensure_ascii=False)
     return (
         raw.replace("</", "<\\/")
-        .replace("\u2028", "\\u2028")
-        .replace("\u2029", "\\u2029")
+        .replace(_LINE_SEPARATOR, "\\u2028")
+        .replace(_PARAGRAPH_SEPARATOR, "\\u2029")
     )
 
 
 def render_html(bundle: dict) -> str:
-    return _TEMPLATE.safe_substitute(BUNDLE_JSON=_safe_json(bundle))
+    return _TEMPLATE.safe_substitute(
+        ALMANAC_CSS=_CSS,
+        ALMANAC_JS=_JS,
+        BUNDLE_JSON=_safe_json(bundle),
+    )
 
 
 def _safe_slug(s: str) -> str:

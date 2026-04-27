@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from almanac.renderer.ansi import hbar
-from almanac.slides._util import assemble, center, emphasize, paint, sanitize_tty
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    microcopy_line,
+    paint,
+    sanitize_tty,
+)
 
 
 class _TopFiles:
@@ -15,6 +22,9 @@ class _TopFiles:
         lines = ["" for _ in range(height)]
         if height >= 2:
             lines[1] = center(emphasize("Top Files by Churn", "rust"), width)
+        cap = microcopy_line(bundle, "top_files_caption", "olive")
+        if cap and height >= 3:
+            lines[2] = center(cap, width)
 
         start = 3
         available = max(0, height - start - 2)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from almanac.slides._util import assemble, center, emphasize, paint
+from almanac.slides._util import assemble, center, emphasize, microcopy_line, paint
 
 
 class _Cover:
@@ -24,6 +24,9 @@ class _Cover:
             lines[min(height - 1, mid + 2)] = center(
                 paint(f"{count} commits", "plum"), width
             )
+        intro = microcopy_line(bundle, "cover_intro", "plum")
+        if intro and height >= 6:
+            lines[min(height - 3, mid + 4)] = center(intro, width)
         if height >= 4:
             lines[height - 2] = center(
                 paint("almanac · your codebase, wrapped", "olive"), width

@@ -133,3 +133,98 @@ def test_languages_sum_to_100_pct(bundle):
     pcts = [float(m.group(1)) for m in re.finditer(r"(\d+\.\d)%", out)]
     assert pcts
     assert 99.0 <= sum(pcts) <= 101.0
+
+
+# --- microcopy integration -------------------------------------------------
+
+
+def _strip_ansi(s: str) -> str:
+    import re
+
+    return re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", s)
+
+
+def test_cover_slide_renders_cover_intro(bundle):
+    from almanac.slides.cover import slide as cover_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {"cover_intro": "The 2025 began with initial CLI wiring."}
+    out = cover_slide(bundle, 80, 24)
+    assert "The 2025 began with initial CLI wiring." in _strip_ansi(out)
+
+
+def test_cover_slide_omits_caption_when_slot_null(bundle):
+    from almanac.slides.cover import slide as cover_slide
+
+    out_without = cover_slide(dict(bundle), 80, 24)
+    bundle_with_null = dict(bundle)
+    bundle_with_null["microcopy"] = {"cover_intro": None}
+    out_null = cover_slide(bundle_with_null, 80, 24)
+    assert out_without == out_null
+
+
+def test_cadence_slide_renders_cadence_caption(bundle):
+    from almanac.slides.cadence import slide as cadence_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {
+        "cadence_caption": "Most likely to ship at 11 PM.",
+        "comeback_caption": None,
+        "quiet_caption": None,
+    }
+    out = cadence_slide(bundle, 100, 30)
+    assert "Most likely to ship at 11 PM." in _strip_ansi(out)
+
+
+def test_cadence_slide_renders_quiet_when_no_comeback(bundle):
+    from almanac.slides.cadence import slide as cadence_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {
+        "cadence_caption": "Most likely to ship at 11 PM.",
+        "comeback_caption": None,
+        "quiet_caption": "42 days without a commit.",
+    }
+    out = cadence_slide(bundle, 100, 30)
+    assert "42 days without a commit." in _strip_ansi(out)
+
+
+def test_top_files_slide_renders_caption(bundle):
+    from almanac.slides.top_files import slide as top_files_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {"top_files_caption": "stats.py had a year."}
+    out = top_files_slide(bundle, 100, 30)
+    assert "stats.py had a year." in _strip_ansi(out)
+
+
+def test_verbs_slide_renders_caption(bundle):
+    from almanac.slides.verbs import slide as verbs_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {"verbs_caption": "Mostly feat work — 40% of the year."}
+    out = verbs_slide(bundle, 100, 30)
+    assert "Mostly feat work — 40% of the year." in _strip_ansi(out)
+
+
+def test_authors_slide_renders_closer_signoff(bundle):
+    from almanac.slides.authors import slide as authors_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {"closer_signoff": "Closed on ship it after a 14-day streak."}
+    out = authors_slide(bundle, 120, 30)
+    assert "Closed on ship it after a 14-day streak." in _strip_ansi(out)
+
+
+def test_microcopy_strips_esc_bytes_in_caption(bundle):
+    from almanac.slides.cover import slide as cover_slide
+
+    bundle = dict(bundle)
+    bundle["microcopy"] = {"cover_intro": "hostile \x1b[31mred\x1b[0m text"}
+    out = cover_slide(bundle, 80, 24)
+    # ESC from the hostile caption is stripped; what remains is the
+    # literal bracket text, which is harmless. The renderer's own paint()
+    # wraps the line in its own ANSI codes — exactly two ESC bytes
+    # (open + close) from microcopy_line, no more.
+    sanitized = bundle["microcopy"]["cover_intro"].replace("\x1b", "")
+    assert sanitized in out, "literal bracket text survives, hostile ESC gone"

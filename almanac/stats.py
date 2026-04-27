@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import NamedTuple
 
+from almanac import microcopy
 from almanac.classifier import BUNDLE_VERB_KEYS, classify_batch
 from almanac.ingest import Commit, coalesce_identities
 from almanac.window import Window
@@ -452,4 +453,5 @@ def compute_bundle(
         "commits_per_day": commits_per_day,
         "highlights": highlights,
     }
+    bundle["microcopy"] = microcopy.compute(bundle)
     return bundle

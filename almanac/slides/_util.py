@@ -50,6 +50,19 @@ def emphasize(text: str, color_name: str = "rust") -> str:
     return ansi.bold() + ansi.truecolor(*ansi.PALETTE[color_name]) + text + ansi.reset()
 
 
+def microcopy_line(bundle: dict, slot: str, color: str = "olive") -> str | None:
+    """Return a sanitized, painted caption from ``bundle.microcopy[slot]``.
+
+    Returns ``None`` when the slot is missing, ``None``, or empty so the
+    caller can leave its layout untouched (no blank line in place of a
+    missing caption).
+    """
+    text = (bundle.get("microcopy") or {}).get(slot)
+    if not text:
+        return None
+    return paint(sanitize_tty(text), color)
+
+
 def assemble(lines: list[str], width: int, height: int) -> str:
     """Clip to height, join with \\n. Caller is responsible for widths."""
     out = [lines[i] if i < len(lines) else "" for i in range(height)]

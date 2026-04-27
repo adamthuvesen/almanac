@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from almanac.renderer import ansi
-from almanac.slides._util import assemble, center, emphasize, paint, stacked_bar
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    microcopy_line,
+    paint,
+    stacked_bar,
+)
 
 _VERB_COLORS = {
     "feat": "sky",
@@ -31,6 +38,9 @@ class _Verbs:
         lines = ["" for _ in range(height)]
         if height >= 2:
             lines[1] = center(emphasize("Commit Verbs", "rust"), width)
+        cap = microcopy_line(bundle, "verbs_caption", "olive")
+        if cap and height >= 3:
+            lines[2] = center(cap, width)
 
         if total <= 0:
             return assemble(lines, width, height)

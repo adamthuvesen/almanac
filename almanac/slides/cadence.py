@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from almanac.renderer.ansi import hbar
-from almanac.slides._util import assemble, center, emphasize, ljust, paint
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    ljust,
+    microcopy_line,
+    paint,
+)
 
 _DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
@@ -19,6 +26,12 @@ class _Cadence:
         lines = ["" for _ in range(height)]
         if height >= 2:
             lines[1] = center(emphasize("Commit Cadence", "rust"), width)
+        cap = microcopy_line(bundle, "cadence_caption", "olive")
+        if cap and height >= 3:
+            lines[2] = center(cap, width)
+        sub = microcopy_line(bundle, "comeback_caption", "plum") or microcopy_line(
+            bundle, "quiet_caption", "plum"
+        )
 
         col_w = width // 2
         bar_w = max(6, col_w - 12)
@@ -49,6 +62,8 @@ class _Cadence:
             left = left_rows[i] if i < len(left_rows) else ""
             right = right_rows[i] if i < len(right_rows) else ""
             lines[start + i] = ljust(left, col_w) + right
+        if sub and height >= 2:
+            lines[height - 1] = center(sub, width)
         return assemble(lines, width, height)
 
 

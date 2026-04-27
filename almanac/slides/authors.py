@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from almanac.slides._util import assemble, center, emphasize, paint, sanitize_tty
+from almanac.slides._util import (
+    assemble,
+    center,
+    emphasize,
+    microcopy_line,
+    paint,
+    sanitize_tty,
+)
 
 
 class _Authors:
@@ -51,6 +58,9 @@ class _Authors:
         if omitted:
             footer = paint(f"…and {omitted} more", "olive")
             lines[min(height - 2, start + 1 + len(shown) + 1)] = "  " + footer
+        signoff = microcopy_line(bundle, "closer_signoff", "plum")
+        if signoff and height >= 2:
+            lines[height - 1] = center(signoff, width)
         return assemble(lines, width, height)
 
 

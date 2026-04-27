@@ -86,13 +86,12 @@ def test_render_html_inlines_bundle_json():
     assert '"commit_count": 3' in out or '"commit_count":3' in out
 
 
-def test_render_html_pins_cdn_versions():
+def test_render_html_has_no_default_remote_assets():
     out = render_html(_minimal_bundle())
-    assert "gsap@3.12.5" in out
-    assert "ScrollTrigger.min.js" in out
-    assert "@observablehq/plot@0.6" in out
-    assert "d3@7" in out
-    assert "@latest" not in out
+    assert 'src="https://' not in out
+    assert 'href="https://' not in out
+    assert "fonts.googleapis.com" not in out
+    assert "cdn.jsdelivr.net" not in out
 
 
 def test_render_html_handles_unicode_and_special_chars():
@@ -224,3 +223,73 @@ def test_render_html_does_not_break_on_dollar_signs_in_data():
     out = render_html(bundle)
     # safe_substitute leaves stray $X alone, so the JSON content is preserved
     assert "$PATH" in out
+
+
+def _bundle_with_microcopy(slots: dict[str, str | None]) -> dict:
+    bundle = _minimal_bundle()
+    bundle["microcopy"] = {
+        "cover_intro": None,
+        "numbers_caption": None,
+        "cadence_caption": None,
+        "top_files_caption": None,
+        "verbs_caption": None,
+        "quiet_caption": None,
+        "comeback_caption": None,
+        "closer_signoff": None,
+    }
+    bundle["microcopy"].update(slots)
+    return bundle
+
+
+def test_render_html_includes_caption_helper():
+    out = render_html(_minimal_bundle())
+    # The caption helper is always defined — only the call sites
+    # short-circuit when a slot is null.
+    assert "const caption" in out
+    assert "slide-caption" in out
+
+
+def test_render_html_inlines_microcopy_when_present():
+    bundle = _bundle_with_microcopy(
+        {
+            "cover_intro": "The 2025 began with initial CLI wiring.",
+            "numbers_caption": "1,240 commits, 12,431 added, 8,019 removed.",
+            "cadence_caption": "Most likely to ship at 11 PM.",
+            "top_files_caption": "stats.py had a year.",
+            "verbs_caption": "Mostly feat work — 34% of the year.",
+            "comeback_caption": (
+                "A quiet spell of 42 days, then back with 9 commits in a fortnight."
+            ),
+            "closer_signoff": "Closed on ship it after a 14-day streak.",
+        }
+    )
+    out = render_html(bundle)
+    # The microcopy strings are embedded in the inlined BUNDLE_JSON.
+    assert "Most likely to ship at 11 PM." in out
+    assert "stats.py had a year." in out
+    assert "Mostly feat work" in out
+
+
+def test_render_html_microcopy_with_metacharacters_is_safe():
+    bundle = _bundle_with_microcopy(
+        {"top_files_caption": "foo.py & bar</script> had a year."}
+    )
+    escaped = _safe_json(bundle)
+    # The bundle JSON is wrapped in a <script> tag; _safe_json must escape
+    # the closing-script sequence in any user-controlled string.
+    assert "</script>" not in escaped
+    assert "<\\/script>" in escaped
+    # The JS caption() helper runs escapeHtml() on the value before
+    # inserting it into the DOM — so the live document never sees a
+    # raw </script> tag from a hostile caption.
+    out = render_html(bundle)
+    assert "escapeHtml" in out
+
+
+def test_render_html_is_deterministic_for_same_bundle():
+    bundle = _bundle_with_microcopy(
+        {"cover_intro": "The 2025 began with initial CLI wiring."}
+    )
+    a = render_html(bundle)
+    b = render_html(bundle)
+    assert a == b

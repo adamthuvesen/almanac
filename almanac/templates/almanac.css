@@ -1,0 +1,306 @@
+  :root {
+    --cream: #F4EDE0;
+    --ink:   #1C1612;
+    --rust:  #A94F2E;
+    --sage:  #5B6A47;
+    --ochre: #C9A24A;
+    --plum:  #4A2E3B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: auto;
+    background: var(--cream);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.11  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>");
+    background-size: 220px 220px;
+    background-attachment: fixed;
+    background-blend-mode: multiply;
+  }
+
+  .display {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 0.95;
+  }
+  .mono   { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .prose  { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+  .ui     { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+  .slide {
+    min-height: 100vh;
+    height: 100vh;
+    padding: 6vh 8vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    background-color: var(--slide-bg, var(--cream));
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.11  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>");
+    background-size: 220px 220px;
+    background-blend-mode: overlay;
+    color: var(--slide-fg, var(--ink));
+    border-bottom: 1px solid rgba(28,22,18,0.05);
+    overflow: hidden;
+  }
+
+  .eyebrow {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 12px;
+    color: var(--slide-accent, var(--plum));
+    margin-bottom: 1.6em;
+  }
+
+  /* Cover / Closer */
+  .cover-title {
+    font-size: clamp(56px, 10vw, 140px);
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  .cover-meta {
+    margin-top: 2.4rem;
+    display: flex;
+    gap: 2rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .cover-meta .label { font-size: 14px; color: var(--slide-accent, var(--plum)); text-transform: uppercase; letter-spacing: 0.12em; }
+  .cover-meta .value { font-size: 18px; }
+  .cover-tag { font-size: clamp(20px, 2.2vw, 28px); margin-top: 1.6rem; color: var(--rust); }
+
+  /* Year in Numbers */
+  .grid6 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1.6vh 4vw;
+    margin-top: 1rem;
+  }
+  .stat .figure {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 600;
+    font-size: clamp(40px, 6vw, 88px);
+    color: inherit;
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+  .stat .label {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+    color: var(--slide-accent, var(--plum));
+    margin-top: 0.6rem;
+  }
+
+  /* Section title */
+  h2.section {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: clamp(48px, 7vw, 110px);
+    line-height: 0.95;
+    margin: 0 0 1rem 0;
+    letter-spacing: 0;
+  }
+
+  /* charts */
+  .chart-wrap { width: 100%; max-width: 1400px; margin-top: 1rem; }
+  .native-chart {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+  .native-chart text {
+    fill: currentColor;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+  }
+  .native-chart .grid-line { stroke: currentColor; opacity: 0.12; }
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4vw;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+  /* Stacked bar */
+  .stack-bar {
+    display: flex;
+    width: 100%;
+    height: 64px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+    background: rgba(28,22,18,0.06);
+  }
+  .stack-bar > div {
+    height: 100%;
+    width: 0;
+    transition: width 0.6s cubic-bezier(.6,.05,.2,1);
+  }
+  .stack-legend {
+    margin-top: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem 2rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+  }
+  .stack-legend .swatch {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+  .stack-legend .pct {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--slide-accent, var(--plum));
+    margin-left: 0.4rem;
+  }
+
+  /* Lang ranked list */
+  .ranked {
+    margin-top: 2rem;
+    border-top: 1px solid rgba(28,22,18,0.12);
+  }
+  .ranked .row {
+    display: grid;
+    grid-template-columns: 60px 1fr 120px 80px;
+    gap: 1.4rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(28,22,18,0.08);
+    align-items: baseline;
+  }
+  .ranked .rank { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--slide-accent, var(--plum)); }
+  .ranked .name { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 22px; }
+  .ranked .num  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; }
+  .ranked .num.added   { color: var(--sage); }
+  .ranked .num.removed { color: var(--slide-accent, var(--plum)); }
+  .ranked .num.commits { color: var(--rust); }
+
+  .author-row {
+    display: grid;
+    grid-template-columns: 60px 56px 1fr 120px 100px 100px;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(28,22,18,0.08);
+    align-items: center;
+  }
+  .author-row .avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--slide-fg, var(--ink));
+    color: var(--slide-bg, var(--cream));
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+  }
+
+  /* First commit narrative */
+  .narrative {
+    max-width: 1200px;
+  }
+  .narrative .caption { font-size: 24px; color: var(--rust); margin-bottom: 1.4rem; }
+  .narrative .subject {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: clamp(40px, 6vw, 84px);
+    line-height: 1.0;
+    margin-bottom: 1.6rem;
+    color: inherit;
+  }
+  .narrative .meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--slide-accent, var(--plum));
+    font-size: 14px;
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+
+  .tagline {
+    margin-top: 2rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: clamp(24px, 3vw, 36px);
+    color: var(--slide-accent, var(--plum));
+    max-width: 60ch;
+  }
+
+  /* Data-backed micro-copy under each slide's eyebrow / heading. */
+  .slide-caption {
+    margin-top: 0.75rem;
+    margin-bottom: 1.6rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: clamp(20px, 2vw, 28px);
+    color: var(--slide-fg, var(--ink));
+    opacity: 0.85;
+    max-width: 60ch;
+  }
+  .slide-caption.subtle {
+    margin-top: 0.4rem;
+    font-size: clamp(16px, 1.4vw, 20px);
+    opacity: 0.6;
+  }
+
+  /* Top-files horizontal bar list */
+  .file-bars { margin-top: 1.5rem; }
+  .file-bars .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 80px;
+    gap: 1.2rem;
+    padding: 0.5rem 0;
+    align-items: center;
+  }
+  .file-bars .path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .file-bars .bar-track { background: rgba(28,22,18,0.06); height: 18px; border-radius: 3px; overflow: hidden; }
+  .file-bars .bar { background: var(--slide-accent, var(--plum)); height: 100%; width: 0; transition: width 0.6s cubic-bezier(.5,.05,.2,1); }
+  .file-bars .edits { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: var(--rust); }
+  .file-bars .row.has-bar { grid-template-columns: 320px 1fr 80px; }
+
+  .footnote {
+    margin-top: 2rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    color: var(--slide-accent, var(--plum));
+    opacity: 0.7;
+  }
+
+  .heatmap-wrap { margin-top: 2rem; overflow-x: auto; }
+  .heatmap-wrap svg { max-width: 100%; height: auto; }
+
+  /* Chart tweaks */
+  figure { margin: 0; }
+
+  /* Dark-slide overrides — bar tracks and dividers adapt to light-on-dark */
+  .slide .stack-bar    { background: rgba(244, 237, 224, 0.12); }
+  .slide .bar-track    { background: rgba(244, 237, 224, 0.10); }
+  .slide .ranked       { border-top-color:    rgba(244, 237, 224, 0.12); }
+  .slide .ranked .row  { border-bottom-color: rgba(244, 237, 224, 0.08); }
+  .slide .author-row   { border-bottom-color: rgba(244, 237, 224, 0.08); }

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from almanac.slides._util import assemble, center, emphasize, paint
+from almanac.slides._util import assemble, center, emphasize, microcopy_line, paint
 
 
 def _fmt(n: int) -> str:
@@ -40,6 +40,9 @@ class _Numbers:
         lines = ["" for _ in range(height)]
         if height >= 2:
             lines[1] = center(emphasize("Year in Numbers", "rust"), width)
+        cap = microcopy_line(bundle, "numbers_caption", "olive")
+        if cap and height >= 3:
+            lines[2] = center(cap, width)
 
         col_w = width // 3
         # Keep the grid visually compact even on tall terminals.
