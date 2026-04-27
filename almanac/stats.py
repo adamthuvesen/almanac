@@ -163,7 +163,24 @@ def _files_and_languages(commits: list[Commit]) -> tuple[list[dict], list[dict]]
     top_files = heapq.nlargest(
         25, file_stats.items(), key=lambda kv: (kv[1]["edits"], kv[1]["lines"])
     )
-    files_by_churn = [{"path": p, **s} for p, s in top_files]
+    top_paths = {p for p, _ in top_files}
+    subjects_by_path: dict[str, list[str]] = {p: [] for p in top_paths}
+
+    for c in reversed(commits):
+        if c.is_merge:
+            continue
+        seen_in_commit: set[str] = set()
+        for f in c.files:
+            p = f.path
+            if p not in top_paths or p in seen_in_commit:
+                continue
+            seen_in_commit.add(p)
+            if len(subjects_by_path[p]) < 5:
+                subjects_by_path[p].append(c.subject)
+
+    files_by_churn = [
+        {"path": p, **s, "subjects": subjects_by_path.get(p, [])} for p, s in top_files
+    ]
 
     total_ext_lines = sum(ext_lines.values())
     languages = sorted(
