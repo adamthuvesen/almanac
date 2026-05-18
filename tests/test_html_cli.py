@@ -12,7 +12,15 @@ REPO = Path(__file__).parent.parent
 
 
 def _runner() -> CliRunner:
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
+
+
+def _combined_click_output(result) -> str:
+    output = result.output or ""
+    try:
+        return output + (result.stderr or "")
+    except ValueError:
+        return output
 
 
 def test_html_out_writes_file_and_skips_browser(tmp_path):
@@ -36,7 +44,7 @@ def test_html_out_writes_file_and_skips_browser(tmp_path):
     assert target.exists(), "output file not written"
     text = target.read_text(encoding="utf-8")
     assert text.startswith("<!doctype html>")
-    assert str(target) in (result.stderr or "")
+    assert str(target) in _combined_click_output(result)
     mock_open.assert_not_called()
 
 
@@ -103,7 +111,7 @@ def test_json_wins_over_html(tmp_path):
     bundle = json.loads(result.stdout)
     assert bundle["schema_version"] == 1
     assert not target.exists(), "HTML file should NOT be written when --json wins"
-    assert "json wins" in (result.stderr or "")
+    assert "json wins" in _combined_click_output(result)
     mock_open.assert_not_called()
 
 
@@ -299,7 +307,7 @@ def test_html_overrides_tty_writes_note(tmp_path):
             ],
         )
     assert result.exit_code == 0, result.output
-    assert "html wins" in (result.stderr or "")
+    assert "html wins" in _combined_click_output(result)
     assert target.exists()
 
 
@@ -320,7 +328,7 @@ def test_invalid_window_exits_nonzero():
         ],
     )
     assert result.exit_code != 0
-    assert "cannot be later" in result.stderr.lower()
+    assert "cannot be later" in _combined_click_output(result).lower()
 
 
 def test_invalid_theme_exits_with_valid_names_on_stderr(tmp_path):
@@ -342,7 +350,7 @@ def test_invalid_theme_exits_with_valid_names_on_stderr(tmp_path):
         ],
     )
     assert result.exit_code == 1
-    err = (result.output or "") + (result.stderr or "")
+    err = _combined_click_output(result)
     for name in ("classic", "terminal", "midnight", "paper", "wrapped"):
         assert name in err, f"expected {name!r} in error message: {err!r}"
     assert not target.exists()

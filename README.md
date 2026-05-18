@@ -36,10 +36,13 @@ almanac --author alice@example.com
 | `--json` | Emit full stats bundle to stdout |
 | `--tty` / `--no-tty` | Force the TTY slideshow or the one-line summary |
 | `--html` / `--html-out PATH` | Render the HTML report (opens in browser, or writes to `PATH`) |
+| `--theme {classic,terminal,midnight,paper,wrapped}` | Theme for HTML output |
+| `--png` / `--png-out PATH` | Render a 1200x630 PNG share card (requires `almanac[png]` and Chromium) |
+| `--demo` | Render a deterministic synthetic report without reading git |
 | `--gravatar` | Opt into Gravatar avatars (emits `md5(email)` to gravatar.com when opened) |
 | `--classifier {auto,rules,zeroshot}` | Commit-subject classifier (default `auto`) |
 
-Stub flags (`--theme`, `--png`, `--demo`, `--voice`, `--soundtrack`, `--slides`) print `not yet implemented` and exit 1.
+Stub flags (`--voice`, `--soundtrack`, `--slides`) print `not yet implemented` and exit 1.
 
 Run `almanac --json | jq` to see the full `schema_version: 1` bundle shape.
 
@@ -48,6 +51,8 @@ Run `almanac --json | jq` to see the full `schema_version: 1` bundle shape.
 ```bash
 uv pip install -e .           # click only, no model downloads
 uv pip install -e '.[ml]'     # + torch/transformers for --classifier zeroshot
+uv pip install -e '.[png]'    # + playwright for --png
+playwright install chromium   # one-time browser install for --png
 ```
 
 Python 3.11+. The zero-shot model (~180MB DeBERTa) downloads to the Hugging Face cache on first use (`HF_HOME` to override).

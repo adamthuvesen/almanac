@@ -13,7 +13,15 @@ REPO = Path(__file__).parent.parent
 
 
 def _runner() -> CliRunner:
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
+
+
+def _combined_click_output(result) -> str:
+    output = result.output or ""
+    try:
+        return output + (result.stderr or "")
+    except ValueError:
+        return output
 
 
 def test_invalid_classifier_exits_nonzero():
@@ -23,7 +31,7 @@ def test_invalid_classifier_exits_nonzero():
         ["--classifier", "wizard", "--repo", str(REPO), "--year", "2025"],
     )
     assert result.exit_code != 0
-    combined = (result.stderr or "") + (result.stdout or "")
+    combined = _combined_click_output(result)
     assert "zeroshot" in combined.lower()
 
 
@@ -40,7 +48,7 @@ def test_zeroshot_without_ml_exits_before_git(tmp_path, monkeypatch):
     runner = _runner()
     result = runner.invoke(main, ["--classifier", "zeroshot", "--year", "2025"])
     assert result.exit_code != 0
-    assert "almanac[ml]" in (result.stderr or "")
+    assert "almanac[ml]" in _combined_click_output(result)
 
 
 def test_classifier_default_is_auto_in_help():

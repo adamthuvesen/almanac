@@ -4,6 +4,8 @@ import os
 import re
 import struct
 import subprocess
+import sys
+import types
 from pathlib import Path
 
 import click
@@ -135,6 +137,54 @@ def test_png_out_refuses_symlink(tmp_path) -> None:
     with pytest.raises(click.ClickException, match="symlink"):
         render_png(_sample_bundle(), link)
     assert victim.read_bytes() == b"keep"
+
+
+def test_render_png_closes_browser_when_screenshot_fails(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from almanac.renderer.png import render_png
+
+    closed: list[str] = []
+
+    class FakePage:
+        def goto(self, *_args, **_kwargs) -> None:
+            pass
+
+        def screenshot(self, **_kwargs) -> None:
+            raise RuntimeError("boom")
+
+    class FakeContext:
+        def new_page(self) -> FakePage:
+            return FakePage()
+
+        def close(self) -> None:
+            closed.append("context")
+
+    class FakeBrowser:
+        def new_context(self, **_kwargs) -> FakeContext:
+            return FakeContext()
+
+        def close(self) -> None:
+            closed.append("browser")
+
+    class FakePlaywright:
+        chromium = types.SimpleNamespace(launch=lambda: FakeBrowser())
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+    sync_api = types.ModuleType("playwright.sync_api")
+    sync_api.sync_playwright = lambda: FakePlaywright()
+    monkeypatch.setitem(sys.modules, "playwright", types.ModuleType("playwright"))
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", sync_api)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        render_png(_sample_bundle(), tmp_path / "out.png")
+
+    assert closed == ["context", "browser"]
 
 
 def test_card_contains_repo_name() -> None:
