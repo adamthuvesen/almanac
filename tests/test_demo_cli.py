@@ -11,7 +11,15 @@ from almanac.cli import main
 
 
 def _runner() -> CliRunner:
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
+
+
+def _combined_click_output(result) -> str:
+    output = result.output or ""
+    try:
+        return output + (result.stderr or "")
+    except ValueError:
+        return output
 
 
 def _extract_bundle(html: str) -> dict:
@@ -93,5 +101,5 @@ def test_demo_conflicts_with_repo():
         ["--demo", "--repo", "/tmp"],
     )
     assert result.exit_code == 1
-    err = (result.output or "") + (getattr(result, "stderr", None) or "")
+    err = _combined_click_output(result)
     assert "--demo" in err and "--repo" in err
