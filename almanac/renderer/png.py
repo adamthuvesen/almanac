@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from contextlib import ExitStack
 from pathlib import Path
 from string import Template
 
@@ -48,21 +49,22 @@ def render_png(bundle: dict, out_path: Path) -> None:
     try:
         uri = Path(tmp_path).as_uri()
         with sync_playwright() as p:
-            browser = p.chromium.launch()
-            context = browser.new_context(
-                viewport={"width": 1200, "height": 630},
-                device_scale_factor=2,
-            )
-            page = context.new_page()
-            page.goto(uri, wait_until="load")
-            page.screenshot(
-                path=str(out),
-                full_page=False,
-                type="png",
-                scale="css",
-            )
-            context.close()
-            browser.close()
+            with ExitStack() as stack:
+                browser = p.chromium.launch()
+                stack.callback(browser.close)
+                context = browser.new_context(
+                    viewport={"width": 1200, "height": 630},
+                    device_scale_factor=2,
+                )
+                stack.callback(context.close)
+                page = context.new_page()
+                page.goto(uri, wait_until="load")
+                page.screenshot(
+                    path=str(out),
+                    full_page=False,
+                    type="png",
+                    scale="css",
+                )
     finally:
         try:
             os.unlink(tmp_path)
