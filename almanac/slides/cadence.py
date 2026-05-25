@@ -59,7 +59,9 @@ class _Cadence:
             label = _DOW[i]
             bar = hbar(count, dow_max, bar_w)
             color = _bar_color(count, dow_max, "sky")
-            left_rows.append(f"  {label}  {paint(bar, color)} {paint(str(count), color)}")
+            left_rows.append(
+                f"  {label}  {paint(bar, color)} {paint(str(count), color)}"
+            )
 
         right_rows = []
         for hour, count in enumerate(by_hour):

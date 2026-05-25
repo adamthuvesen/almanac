@@ -64,3 +64,11 @@ Single `git log --numstat -z` subprocess; stats computed in memory. TTY and HTML
 Windows are **author-local** (commit `%aI` wall-clock), so heatmaps and hour-of-day slides match what you see in your own log. Non-UTF-8 bytes in commits or paths decode with replacement characters; hostile repos can't crash the run.
 
 Commit subjects are classified into Conventional Commits verbs (`feat`, `fix`, `chore`, …) plus `unclear`, through a layered pipeline: preprocessing (strips PR/ticket/branch noise) → CC regex → first-verb rules → Renovate/Dependabot patterns → optional zero-shot DeBERTa. The model collapses to `unclear` below 0.35 confidence or a 0.05 top-two margin.
+
+## Development
+
+```bash
+uv sync --dev
+uv run pre-commit install
+make check
+```
