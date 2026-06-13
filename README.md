@@ -1,12 +1,12 @@
 # Almanac
 
-Spotify Wrapped for your codebase.
+A year-in-review for a git repo — "Spotify Wrapped for your codebase." Point it at a repo and a time range; it reads `git log` and reports commit cadence, line churn, the files that changed most, language mix, and per-author breakdowns.
 
-Pick a repo and a time range. Get a self-contained HTML report with commit velocity, code churn, hottest files, language breakdown, and author stats, plus a JSON bundle and a quick TTY peek for the terminal.
+Output is one of: a self-contained HTML report, the raw JSON bundle, an animated TTY slideshow, or a one-line summary.
 
 ## Usage
 
-The main output is the HTML report: single file, no outbound requests, shareable as-is.
+The HTML report is the main output — a single file with no outbound requests.
 
 ```bash
 almanac --html                   # render and open in browser
