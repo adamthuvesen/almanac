@@ -68,10 +68,6 @@ cli.py → window.resolve_window → ingest.iter_commits → stats.compute_bundl
 - Commit subjects / author names / paths are HTML-escaped at render time. ESC and C0 control bytes are stripped in the TTY renderer so a hostile commit can't clear the screen.
 - `git log --numstat -z` (NUL-terminated) is required — tabs/newlines in filenames parse correctly only in `-z` mode. See `tests/test_ingest_parser.py`.
 
-## OpenSpec
-
-This repo uses OpenSpec (`openspec/`) for structured change tracking. Prefer the `/opsx:*` skills for non-trivial work: `/opsx:propose` → `/opsx:apply` → `/opsx:verify` → `/opsx:archive`. Archived proposals under `openspec/changes/archive/` are the best reference for how proposals are scoped in this project (short, with Non-goals + Success criteria sections, per `openspec/config.yaml`).
-
 ## Reserved/stub flags
 
 `--demo` is supported (synthetic bundle, no git). `--png` requires the optional `almanac[png]` extra and a one-time `playwright install chromium` for share-card export.
