@@ -4,6 +4,23 @@ A year-in-review for a git repo — "Spotify Wrapped for your codebase." Point i
 
 Output is one of: a self-contained HTML report, the raw JSON bundle, an animated TTY slideshow, or a one-line summary.
 
+## Quickstart
+
+Install from a checkout:
+
+```bash
+uv pip install -e .
+```
+
+Run a tiny demo that does not read git history:
+
+```bash
+almanac --demo --html-out demo.html
+```
+
+Open `demo.html` in a browser. It is a self-contained report built from
+deterministic synthetic data.
+
 ## Usage
 
 The HTML report is the main output — a single file with no outbound requests.
@@ -49,13 +66,14 @@ Run `almanac --json | jq` to see the full `schema_version: 1` bundle shape.
 ## Install
 
 ```bash
-uv pip install -e .           # click only, no model downloads
 uv pip install -e '.[ml]'     # + torch/transformers for --classifier zeroshot
 uv pip install -e '.[png]'    # + playwright for --png
 playwright install chromium   # one-time browser install for --png
 ```
 
-Python 3.11+. The zero-shot model (~180MB DeBERTa) downloads to the Hugging Face cache on first use (`HF_HOME` to override).
+Python 3.11+. The base install uses Click only and downloads no models. The
+zero-shot model (~180MB DeBERTa) downloads to the Hugging Face cache on first
+use (`HF_HOME` to override).
 
 ## How it works
 
