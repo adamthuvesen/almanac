@@ -1,72 +1,66 @@
-# AGENTS.md
-
-Canonical instructions for AI coding agents working in this repository (Claude, Codex, Cursor, etc.). `CLAUDE.md` is a symlink to this file — edit `AGENTS.md`.
-
-## Project
+# AGENTS.md — Almanac
 
 Almanac — "Spotify Wrapped for your codebase." A Python 3.11+ CLI that reads `git log` from a local repo and emits a stats bundle (JSON), a one-line summary, an animated TTY presentation, or a self-contained HTML report.
 
-## Commands
+User-level guidance (tone, principles, git etiquette) lives in `~/.claude/CLAUDE.md` and `~/dotfiles/agents/AGENTS.md` and is *not* duplicated here. This file is for project-specific facts. `CLAUDE.md` is a symlink to this file — edit `AGENTS.md`.
+
+## Layout
+
+```
+almanac/
+├── window.py        Resolve --year/--since/--until into a Window
+├── ingest.py        git log subprocess → Commit list
+├── stats.py         Aggregate commits → schema_version:1 bundle
+├── classifier/      Layered commit-subject classifier (rules + zeroshot)
+├── renderer/        TTY orchestrator, HTML, PNG, one-line consumers
+├── slides/          One Slide per TTY screen; registry in __init__.py
+├── templates/       almanac.html/css/js + card.html for HTML/PNG output
+└── cli.py           Entry point (almanac.cli:main)
+
+tests/               pytest suite; test_smoke_self.py runs the CLI on this repo
+docs/                Subsystem docs — see Index
+```
+
+## Quickstart
 
 ```bash
-# Setup (uv)
 uv venv && source .venv/bin/activate
-uv pip install -e ".[dev]"          # base + dev
-uv pip install -e '.[ml]'           # optional: torch/transformers for zero-shot
-uv pip install -e '.[png]'          # optional: playwright for --png (then: playwright install chromium)
+uv pip install -e ".[dev]"           # base + dev
+uv pip install -e '.[ml]'            # optional: torch/transformers for zero-shot
+uv pip install -e '.[png]'           # optional: playwright for --png
 
-# Run the CLI (entry point: almanac.cli:main)
 almanac                              # current repo, last 12 months, TTY if interactive
 almanac --json                       # full stats bundle on stdout
 almanac --html                       # render + open HTML report
-almanac --html-out report.html       # render HTML to path, no browser
-almanac --png                        # 1200×630 share card → ./summary-card.png (needs almanac[png])
 almanac --classifier {auto,rules,zeroshot}
 
-# Tests (pytest configured via pyproject)
-pytest -v --tb=short
-pytest tests/test_classifier_rules.py::test_name   # single test
-pytest -k "classifier and not zeroshot"            # filter
-
-# Lint / format
-ruff check . --fix && ruff format .
+uv run pytest tests/ -q              # tests
+uv run ruff check .                  # lint
+uv run ruff format --check .         # format check
 ```
 
-The `[ml]` extra is heavy (torch). Zero-shot tests are gated — most of the suite runs without it. `tests/test_smoke_self.py` runs the CLI against this repo itself as an end-to-end check.
+## Critical Conventions
 
-## Architecture
+- **The JSON bundle is the contract.** Renderers consume `schema_version: 1` and stay independent of the ingest/stats engine. Add a slide → keep TTY and HTML in sync against the bundle, not a Python type.
+- **Author-local time everywhere.** `window.py` resolves dates from commit `%aI` wall-clock; bare `YYYY-MM-DD` in `--until` is inclusive of the end day. All buckets (`by_hour`, `by_dow`) follow this — don't switch to UTC without updating every bucket.
+- **`git log --numstat -z` is required.** NUL-terminated output is the only mode where tabs/newlines in filenames parse correctly; see [almanac/ingest.py](almanac/ingest.py) and `tests/test_ingest_parser.py`.
+- **HTML output path is a random-suffixed tempfile.** Don't "simplify" [almanac/renderer/html.py](almanac/renderer/html.py) to a predictable name — that's a symlink hijack.
+- **Never commit secrets, `.env`, or AI-attribution lines.**
 
-The pipeline is a straight line, and each stage is independently testable:
+## Read The Docs First
 
-```
-cli.py → window.resolve_window → ingest.iter_commits → stats.compute_bundle → renderer/{orchestrator,html,one-line}
-```
+Before editing a subsystem, read the matching `docs/*.md`:
 
-**`almanac/window.py`** — Resolves `--year` / `--since` / `--until` into a `Window` in the **author-local** convention (wall-clock from commit `%aI`). Bare `YYYY-MM-DD` in `--until` is **inclusive of the end day**; default is trailing 12 months. All downstream buckets (by_hour, by_dow) use this same convention. Don't switch to UTC without updating every bucket.
+- **Architecture / pipeline** → [architecture.md](docs/architecture.md)
+- **Commit classifier** (rules + zeroshot, preprocess, cache) → [classifier.md](docs/classifier.md)
+- **TTY + HTML renderers** (slides, themes, escaping) → [rendering.md](docs/rendering.md)
 
-**`almanac/ingest.py`** — Single `git log --numstat -z --pretty=format:...` subprocess. Parses NUL-terminated records (renames emit an empty path + two extra NUL tokens; binary files show `-\t-`). Non-UTF-8 bytes are decoded with `errors="replace"` — never crash on hostile commit data. `coalesce_identities` merges author emails by name similarity; `Commit.is_merge` is derived from `len(parents) > 1`.
-
-**`almanac/stats.py`** — Pure-Python aggregation over the in-memory commit list. Produces the `schema_version: 1` bundle (commit_count, verbs, by_dow, by_hour, lines_added/removed, biggest_commit, streak/gap, files_by_churn, languages, authors, subjects_sample). Every verb key in `BUNDLE_VERB_KEYS` is always present, even when zero.
-
-**`almanac/classifier/`** — Layered commit-subject classifier, gated by `--classifier`:
-1. `preprocess.py` strips PR suffixes `(#1234)`, bracketed tickets `[ABC-123]`, bare tickets `PROJ 821`, branch prefixes `alice/...`. Conventional Commits subjects are never altered.
-2. `rules.py` matches CC regex (`feat(scope): ...`), then first-verb rules (`add→feat`, `bump→chore`, ~50 entries), then Renovate/Dependabot dependency-bump patterns.
-3. `zeroshot.py` runs a local DeBERTa MNLI pipeline via `transformers`. Collapses to `unclear` below 0.35 confidence or when top-two margin < 0.05.
-4. `cache.py` memoizes by `(preprocessed_subject, body)` so re-runs are cheap.
-
-`auto` picks zeroshot if `transformers` imports, else `rules`. `zeroshot` errors out at CLI entry if the extra is missing, before any git work.
-
-**`almanac/renderer/`** — Two consumers of the same bundle:
-- `orchestrator.py` drives the TTY presentation: raw-mode stdin, alt-screen, ANSI cursor control, one `Slide` per screen. Slides live in `almanac/slides/` (cover, numbers, cadence, top_files, languages, verbs, authors) and implement a `Slide` protocol with a `render(bundle, term_size) → str` method. Registry lives in `slides/__init__.py:SLIDES`.
-- `html.py` renders `templates/almanac.html` via `string.Template.safe_substitute`, injecting the bundle as `BUNDLE_JSON` with `</`, U+2028, U+2029 escaped so string content can't break out of the `<script>` tag. Default output path is a random-suffixed `tempfile.NamedTemporaryFile` — don't "simplify" this to a predictable name (symlink hijack).
-
-**Renderers consume the JSON bundle and are independent of the ingest/stats engine.** If you add a slide, both TTY and HTML should stay in sync — the bundle is the shared contract, not any Python type.
+If a doc disagrees with code, fix the doc in the same change.
 
 ## Safety invariants (don't regress these)
 
 - HTML report makes **zero outbound requests by default**. Gravatar avatars only via `--gravatar` (emits `md5(email)` for top authors).
-- Commit subjects / author names / paths are HTML-escaped at render time. ESC and C0 control bytes are stripped in the TTY renderer so a hostile commit can't clear the screen.
-- `git log --numstat -z` (NUL-terminated) is required — tabs/newlines in filenames parse correctly only in `-z` mode. See `tests/test_ingest_parser.py`.
+- Never crash on hostile commit data: non-UTF-8 bytes decode with `errors="replace"`; commit subjects / author names / paths are HTML-escaped at render time; ESC and C0 control bytes are stripped in the TTY renderer so a hostile commit can't clear the screen.
 
 ## Reserved/stub flags
 
@@ -74,4 +68,6 @@ cli.py → window.resolve_window → ingest.iter_commits → stats.compute_bundl
 
 These are still registered but not implemented: `--voice`, `--soundtrack`, `--slides` (they print `not yet implemented` and exit 1). Do not re-purpose them quietly.
 
-`--theme` applies to HTML output (`classic`, `terminal`, `midnight`, `paper`, `wrapped`).
+## Index
+
+Start in [architecture.md](docs/architecture.md), then follow the subsystem docs above.
