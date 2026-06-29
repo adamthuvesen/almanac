@@ -4,6 +4,12 @@ A year-in-review for a git repo — "Spotify Wrapped for your codebase." Point i
 
 Output is one of: a self-contained HTML report, the raw JSON bundle, an animated TTY slideshow, or a one-line summary.
 
+![Almanac report cover for the public requests repository](assets/almanac-requests-cover.png)
+
+![Almanac top-files slide for the public requests repository](assets/almanac-requests-top-files.png)
+
+The screenshots above were generated from the public [`psf/requests`](https://github.com/psf/requests) repository over a 2020-2025 window.
+
 ## Quickstart
 
 Install from a checkout:
@@ -41,6 +47,18 @@ almanac --repo ~/dev/my-project
 almanac --author alice@example.com
 ```
 
+To reproduce the README screenshots:
+
+```bash
+git clone https://github.com/psf/requests.git /tmp/requests
+almanac \
+  --repo /tmp/requests \
+  --since 2020-01-01 \
+  --until 2025-12-31 \
+  --theme wrapped \
+  --html-out /tmp/almanac-requests-2020-2025.html
+```
+
 ## Flags
 
 | Flag | Description |
@@ -66,6 +84,7 @@ Run `almanac --json | jq` to see the full `schema_version: 1` bundle shape.
 ## Install
 
 ```bash
+uv pip install -e .           # click only, no model downloads
 uv pip install -e '.[ml]'     # + torch/transformers for --classifier zeroshot
 uv pip install -e '.[png]'    # + playwright for --png
 playwright install chromium   # one-time browser install for --png
