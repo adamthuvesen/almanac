@@ -1,5 +1,7 @@
 # Almanac
 
+![License](https://img.shields.io/github/license/adamthuvesen/almanac) ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+
 A year-in-review for a git repo — "Spotify Wrapped for your codebase." Point it at a repo and a time range; it reads `git log` and reports commit cadence, line churn, the files that changed most, language mix, and per-author breakdowns.
 
 Output is one of: a self-contained HTML report, the raw JSON bundle, an animated TTY slideshow, or a one-line summary.
