@@ -17,5 +17,3 @@ almanac.json
 .cursor/
 .codex/
 
-# OpenSpec proposals are workflow artifacts — not part of the public project
-openspec/
